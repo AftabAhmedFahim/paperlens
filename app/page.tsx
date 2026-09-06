@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import samplePaperJson from "@/data/sample-paper.json";
 import sampleCosJson from "@/data/sample-cos.json";
-import { mockAudit } from "@/components/mockAudit";
+import facultyData from "@/data/faculty.json";
+import { mockAudit, Audit } from "@/components/mockAudit";
 import { UploadPanel, Analyzing } from "@/components/UploadAndAnalyzing";
 import {
   HealthScore,
@@ -12,8 +13,17 @@ import {
   Repeats,
   Issues,
 } from "@/components/ReportSections";
+import { FacultySwitcher, Faculty } from "@/components/FacultySwitcher";
+import {
+  AuditHistory,
+  AuditRecord,
+  loadHistory,
+  saveHistory,
+} from "@/components/AuditHistory";
 
 type Screen = "upload" | "analyzing" | "report";
+
+const FACULTY: Faculty[] = facultyData as Faculty[];
 
 // Co texts from sample-cos for display in coverage cards
 const CO_TEXTS: Record<string, string> = {
@@ -41,6 +51,26 @@ export default function Home() {
   const [screen, setScreen] = useState<Screen>("upload");
   const [paperText, setPaperText] = useState("");
   const [cosText, setCosText] = useState("");
+  const [currentAudit, setCurrentAudit] = useState<Audit | null>(null);
+
+  // ── Faculty state ──
+  const [activeFaculty, setActiveFaculty] = useState<Faculty>(FACULTY[0]);
+  const [history, setHistory] = useState<AuditRecord[]>([]);
+
+  // Load history from localStorage when faculty changes or on first mount
+  useEffect(() => {
+    setHistory(loadHistory(activeFaculty.id));
+  }, [activeFaculty.id]);
+
+  const switchFaculty = useCallback((f: Faculty) => {
+    setActiveFaculty(f);
+    // Clear current work — instant swap
+    setPaperText("");
+    setCosText("");
+    setCurrentAudit(null);
+    setScreen("upload");
+    // History is loaded by the useEffect above
+  }, []);
 
   function loadSample() {
     setPaperText(JSON.stringify(samplePaperJson, null, 2));
@@ -51,12 +81,37 @@ export default function Home() {
     setScreen("analyzing");
   }
 
+  function onAnalysisComplete() {
+    // Use mock audit as the result
+    setCurrentAudit(mockAudit);
+
+    // Append to history
+    const record: AuditRecord = {
+      paperCourse: samplePaperJson.course ?? "Unknown course",
+      healthScore: mockAudit.healthScore,
+      timestamp: new Date().toISOString(),
+      issueCount: mockAudit.issues.length,
+      audit: mockAudit,
+    };
+    const updated = [record, ...history];
+    setHistory(updated);
+    saveHistory(activeFaculty.id, updated);
+
+    setScreen("report");
+  }
+
+  function loadFromHistory(record: AuditRecord) {
+    setCurrentAudit(record.audit);
+    setScreen("report");
+  }
+
   function handleGenerateFix(targetCo: string) {
     // No-op: will be wired to backend later
     console.log("Generate fix requested for", targetCo);
   }
 
   const canAudit = paperText.trim().length > 0 && cosText.trim().length > 0;
+  const audit = currentAudit ?? mockAudit;
 
   return (
     <>
@@ -67,6 +122,11 @@ export default function Home() {
           PaperLens
         </div>
         <span className="pl-nav-tag">Exam Paper Auditor</span>
+        <FacultySwitcher
+          faculty={FACULTY}
+          active={activeFaculty}
+          onSwitch={switchFaculty}
+        />
       </nav>
 
       <main className="pl-page">
@@ -126,6 +186,15 @@ export default function Home() {
                 Audit this paper
               </button>
             </div>
+
+            {/* Show past audits on the upload screen too */}
+            <div style={{ marginTop: "3rem" }}>
+              <AuditHistory
+                records={history}
+                onSelect={loadFromHistory}
+                facultyName={activeFaculty.name}
+              />
+            </div>
           </>
         )}
 
@@ -133,7 +202,7 @@ export default function Home() {
             ANALYZING SCREEN
         ══════════════════════════════════════════════════════════════ */}
         {screen === "analyzing" && (
-          <Analyzing onComplete={() => setScreen("report")} />
+          <Analyzing onComplete={onAnalysisComplete} />
         )}
 
         {/* ══════════════════════════════════════════════════════════════
@@ -154,6 +223,7 @@ export default function Home() {
                 onClick={() => {
                   setPaperText("");
                   setCosText("");
+                  setCurrentAudit(null);
                   setScreen("upload");
                 }}
               >
@@ -161,19 +231,26 @@ export default function Home() {
               </button>
             </div>
 
-            <HealthScore score={mockAudit.healthScore} />
+            <HealthScore score={audit.healthScore} />
             <div className="pl-divider" />
 
-            <CoverageGrid coverage={mockAudit.coverage} coTexts={CO_TEXTS} />
+            <CoverageGrid coverage={audit.coverage} coTexts={CO_TEXTS} />
             <div className="pl-divider" />
 
-            <BloomChart bloom={mockAudit.bloom} totalMarks={100} />
+            <BloomChart bloom={audit.bloom} totalMarks={100} />
             <div className="pl-divider" />
 
-            <Repeats repeats={mockAudit.repeats} questionTexts={Q_TEXTS} />
+            <Repeats repeats={audit.repeats} questionTexts={Q_TEXTS} />
             <div className="pl-divider" />
 
-            <Issues issues={mockAudit.issues} onGenerateFix={handleGenerateFix} />
+            <Issues issues={audit.issues} onGenerateFix={handleGenerateFix} />
+            <div className="pl-divider" />
+
+            <AuditHistory
+              records={history}
+              onSelect={loadFromHistory}
+              facultyName={activeFaculty.name}
+            />
           </>
         )}
       </main>
