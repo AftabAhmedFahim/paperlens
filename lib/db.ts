@@ -6,10 +6,14 @@ import facultyData from "@/data/faculty.json";
 import samplePaperJson from "@/data/sample-paper.json";
 import sampleCosJson from "@/data/sample-cos.json";
 import pastQuestionsJson from "@/data/past-questions.json";
+import samplePaperCse1101Json from "@/data/sample-paper-cse1101.json";
+import samplePaperCse2101Json from "@/data/sample-paper-cse2101.json";
 
 const DB_PATH = path.join(process.cwd(), "data", "paperlens.db");
 
 export const SEED_PAPER_ID = "paper-cse3103-sample";
+export const SEED_PAPER_CSE1101_ID = "paper-cse1101-sample";
+export const SEED_PAPER_CSE2101_ID = "paper-cse2101-sample";
 
 let dbInstance: Database.Database | null = null;
 
@@ -92,10 +96,11 @@ function initSchema(db: Database.Database) {
 }
 
 function seedIfEmpty(db: Database.Database) {
+  // 1. Faculty
   const countFaculty = (db.prepare("SELECT count(*) as count FROM faculty").get() as any).count;
   if (countFaculty === 0) {
     const insertFaculty = db.prepare(`
-      INSERT INTO faculty (id, name, department, email, passwordHash)
+      INSERT OR IGNORE INTO faculty (id, name, department, email, passwordHash)
       VALUES (?, ?, ?, ?, ?)
     `);
     const insertManyFaculty = db.transaction((list: any[]) => {
@@ -106,78 +111,179 @@ function seedIfEmpty(db: Database.Database) {
     insertManyFaculty(facultyData as any[]);
   }
 
-  const countPast = (db.prepare("SELECT count(*) as count FROM past_questions").get() as any).count;
-  if (countPast === 0) {
-    const insertPast = db.prepare(`
-      INSERT INTO past_questions (id, course, year, text)
-      VALUES (?, ?, ?, ?)
-    `);
-    const insertManyPast = db.transaction((list: any[]) => {
+  // 2. Past questions
+  const insertPast = db.prepare(`
+    INSERT OR IGNORE INTO past_questions (id, course, year, text)
+    VALUES (?, ?, ?, ?)
+  `);
+
+  const countPast3103 = (db.prepare("SELECT count(*) as count FROM past_questions WHERE course = ?").get("CSE 3103") as any).count;
+  if (countPast3103 === 0) {
+    const insert3103 = db.transaction((list: any[]) => {
       list.forEach((pq, idx) => {
-        insertPast.run(`pq_${idx + 1}`, pq.course || "CSE 3103", String(pq.year), pq.text);
+        insertPast.run(`pq_3103_${idx + 1}`, "CSE 3103", String(pq.year), pq.text);
       });
     });
-    insertManyPast(pastQuestionsJson as any[]);
+    insert3103(pastQuestionsJson as any[]);
   }
 
-  const countPapers = (db.prepare("SELECT count(*) as count FROM papers WHERE id = ?").get(SEED_PAPER_ID) as any).count;
-  if (countPapers === 0) {
-    const defaultFacultyId = (facultyData[0] as any)?.id || "fac-01";
+  const countPast1101 = (db.prepare("SELECT count(*) as count FROM past_questions WHERE course = ?").get("CSE 1101") as any).count;
+  if (countPast1101 === 0 && (samplePaperCse1101Json as any).pastQuestions) {
+    const insert1101 = db.transaction((list: any[]) => {
+      list.forEach((pq, idx) => {
+        insertPast.run(`pq_1101_${idx + 1}`, "CSE 1101", String(pq.year), pq.text);
+      });
+    });
+    insert1101((samplePaperCse1101Json as any).pastQuestions);
+  }
+
+  const countPast2101 = (db.prepare("SELECT count(*) as count FROM past_questions WHERE course = ?").get("CSE 2101") as any).count;
+  if (countPast2101 === 0 && (samplePaperCse2101Json as any).pastQuestions) {
+    const insert2101 = db.transaction((list: any[]) => {
+      list.forEach((pq, idx) => {
+        insertPast.run(`pq_2101_${idx + 1}`, "CSE 2101", String(pq.year), pq.text);
+      });
+    });
+    insert2101((samplePaperCse2101Json as any).pastQuestions);
+  }
+
+  // 3. Helper to seed a paper with its questions, outcomes, and initial baseline audit
+  const insertPaper = db.prepare(`
+    INSERT OR IGNORE INTO papers (id, faculty_id, course, title, totalMarks, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  const insertQuestion = db.prepare(`
+    INSERT OR IGNORE INTO questions (id, paper_id, qid, text, marks, position, is_suggested)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  const insertOutcome = db.prepare(`
+    INSERT OR IGNORE INTO outcomes (id, paper_id, co_id, text, targetBloom)
+    VALUES (?, ?, ?, ?, ?)
+  `);
+
+  const insertAudit = db.prepare(`
+    INSERT OR IGNORE INTO audits (id, paper_id, faculty_id, healthScore, payload, created_at)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `);
+
+  function seedPaper(
+    paperId: string,
+    facultyId: string,
+    course: string,
+    title: string,
+    totalMarks: number,
+    questions: any[],
+    outcomes: any[],
+    baselineScore: number
+  ) {
+    const paperExists = (db.prepare("SELECT count(*) as count FROM papers WHERE id = ?").get(paperId) as any).count;
     const now = new Date().toISOString();
-    const paper = samplePaperJson as Paper;
-    const cos = sampleCosJson as CourseOutcome[];
 
-    const insertPaper = db.prepare(`
-      INSERT INTO papers (id, faculty_id, course, title, totalMarks, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `);
+    if (paperExists === 0) {
+      const seedTxn = db.transaction(() => {
+        insertPaper.run(paperId, facultyId, course, title, totalMarks, now, now);
 
-    const insertQuestion = db.prepare(`
-      INSERT INTO questions (id, paper_id, qid, text, marks, position, is_suggested)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `);
+        questions.forEach((q, idx) => {
+          insertQuestion.run(
+            `${paperId}_q_${idx + 1}`,
+            paperId,
+            q.id,
+            q.text,
+            q.marks,
+            idx,
+            q.is_suggested ? 1 : 0
+          );
+        });
 
-    const insertOutcome = db.prepare(`
-      INSERT INTO outcomes (id, paper_id, co_id, text, targetBloom)
-      VALUES (?, ?, ?, ?, ?)
-    `);
+        outcomes.forEach((c, idx) => {
+          insertOutcome.run(
+            `${paperId}_co_${idx + 1}`,
+            paperId,
+            c.id,
+            c.text,
+            c.targetBloom
+          );
+        });
+      });
+      seedTxn();
+    }
 
-    const seedSamplePaper = db.transaction(() => {
-      insertPaper.run(
-        SEED_PAPER_ID,
-        defaultFacultyId,
-        paper.course || "CSE 3103",
-        "CSE 3103 — Database Management Systems, Semester Final",
-        paper.totalMarks || 60,
-        now,
+    // Seed baseline audit if no audits exist yet for this paper
+    const auditCount = (db.prepare("SELECT count(*) as count FROM audits WHERE paper_id = ?").get(paperId) as any).count;
+    if (auditCount === 0) {
+      const payload = {
+        healthScore: baselineScore,
+        bloom: { Remember: 25, Understand: 25, Apply: 30, Analyze: 10, Evaluate: 10, Create: 0 },
+        coverage: outcomes.map((c: any) => ({
+          co: c.id,
+          marks: 10,
+          sharePct: 16.7,
+          questionIds: ["1a"],
+          status: "covered",
+        })),
+        repeats: [],
+        issues: [
+          {
+            severity: "high",
+            message: `${course} baseline evaluation recorded upon initial course setup.`,
+          },
+        ],
+        questionAnalysis: questions.map((q: any) => ({
+          id: q.id,
+          co: "CO1",
+          bloom: "Apply",
+          rationale: "Initial baseline classification.",
+        })),
+      };
+
+      insertAudit.run(
+        `audit-init-${paperId}`,
+        paperId,
+        facultyId,
+        baselineScore,
+        JSON.stringify(payload),
         now
       );
-
-      paper.questions.forEach((q, idx) => {
-        insertQuestion.run(
-          `${SEED_PAPER_ID}_q_${idx + 1}`,
-          SEED_PAPER_ID,
-          q.id,
-          q.text,
-          q.marks,
-          idx,
-          0
-        );
-      });
-
-      cos.forEach((c, idx) => {
-        insertOutcome.run(
-          `${SEED_PAPER_ID}_co_${idx + 1}`,
-          SEED_PAPER_ID,
-          c.id,
-          c.text,
-          c.targetBloom
-        );
-      });
-    });
-
-    seedSamplePaper();
+    }
   }
+
+  // Seed Paper 1: CSE 3103 (Dr. Aris Thorne - fac-01)
+  seedPaper(
+    SEED_PAPER_ID,
+    "fac-01",
+    "CSE 3103",
+    "CSE 3103 — Database Management Systems, Semester Final",
+    60,
+    (samplePaperJson as any).questions,
+    (sampleCosJson as any),
+    65
+  );
+
+  // Seed Paper 2: CSE 1101 (Dr. Tanvir Ahmed - fac-03)
+  seedPaper(
+    SEED_PAPER_CSE1101_ID,
+    "fac-03",
+    "CSE 1101",
+    (samplePaperCse1101Json as any).title || "CSE 1101 — Structured Programming Language, Semester Final",
+    (samplePaperCse1101Json as any).totalMarks || 60,
+    (samplePaperCse1101Json as any).questions,
+    (samplePaperCse1101Json as any).outcomes,
+    88
+  );
+
+  // Seed Paper 3: CSE 2101 (Dr. Nusrat Jahan - fac-02)
+  seedPaper(
+    SEED_PAPER_CSE2101_ID,
+    "fac-02",
+    "CSE 2101",
+    (samplePaperCse2101Json as any).title || "CSE 2101 — Data Structures, Semester Final",
+    (samplePaperCse2101Json as any).totalMarks || 60,
+    (samplePaperCse2101Json as any).questions,
+    (samplePaperCse2101Json as any).outcomes,
+    70
+  );
 }
 
 // ─── Mapper Functions ────────────────────────────────────────────────────────

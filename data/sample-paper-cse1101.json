@@ -1,0 +1,98 @@
+{
+  "paperId": "paper-cse1101-sample",
+  "facultyId": "fac-03",
+  "course": "CSE 1101",
+  "title": "CSE 1101 — Structured Programming Language, Semester Final",
+  "totalMarks": 60,
+  "questions": [
+    {
+      "id": "1a",
+      "text": "State the storage class specifiers available in C. For each of auto, register, static and extern, state its storage location, default initial value, scope and lifetime.",
+      "marks": 6
+    },
+    {
+      "id": "1b",
+      "text": "Explain the difference between call by value and call by reference in C. Write a short function swap() in each style and explain why only one of them changes the values in the calling function.",
+      "marks": 7
+    },
+    {
+      "id": "2a",
+      "text": "Write a complete C program that reads two matrices of order m x n and p x q from the user, checks whether they can be multiplied, and prints their product if multiplication is possible. Print a suitable message if it is not.",
+      "marks": 8
+    },
+    {
+      "id": "2b",
+      "text": "Write a C program that reads a sentence from the user and prints (i) the number of words, (ii) the longest word, and (iii) the sentence with the case of every alphabetic character reversed. Do not use any library function other than those declared in stdio.h.",
+      "marks": 7
+    },
+    {
+      "id": "3a",
+      "text": "Consider the following program:\n\nint main(void) {\n    int a[5] = {2, 4, 6, 8, 10};\n    int *p = a + 1;\n    p += 2;\n    printf(\"%d %d %d\\n\", *p, *(p - 1), p - a);\n    (*p)++;\n    printf(\"%d\\n\", a[3]);\n    return 0;\n}\n\nDetermine the exact output of the program. Explain how pointer arithmetic produces each printed value, and state what the expression p - a evaluates to and why.",
+      "marks": 8
+    },
+    {
+      "id": "3b",
+      "text": "The following function is intended to return the factorial of n but does not work correctly for all inputs:\n\nint fact(int n) {\n    int r;\n    if (n = 0) return 1;\n    for (int i = 1; i <= n; i++)\n        r = r * i;\n    return r;\n}\n\nIdentify every defect in this function, explain the consequence of each, and state which of them the compiler would warn about and which would only appear at run time.",
+      "marks": 7
+    },
+    {
+      "id": "4a",
+      "text": "A program must compute the nth Fibonacci number, where n may be as large as 40 and the function is called repeatedly inside a loop. Compare a naive recursive implementation, a memoised recursive implementation and an iterative implementation. Recommend one for this situation and justify your recommendation in terms of time complexity, stack usage and code clarity.",
+      "marks": 8
+    },
+    {
+      "id": "4b",
+      "text": "Design a modular C program for a small library that stores, for each book, an accession number, a title, an author and an availability flag. Your program must support adding a book, issuing a book, returning a book and listing all available books. Define an appropriate structure, declare the function prototypes with their parameters and return types, and explain how you divided the work between the functions and why.",
+      "marks": 9
+    }
+  ],
+  "outcomes": [
+    {
+      "id": "CO1",
+      "text": "State the syntax, data types, operators and storage classes of the C programming language.",
+      "targetBloom": "Remember"
+    },
+    {
+      "id": "CO2",
+      "text": "Explain control flow, function invocation and parameter passing mechanisms in a structured program.",
+      "targetBloom": "Understand"
+    },
+    {
+      "id": "CO3",
+      "text": "Write programs that use loops, arrays, strings and functions to solve a stated problem.",
+      "targetBloom": "Apply"
+    },
+    {
+      "id": "CO4",
+      "text": "Analyse and debug a given program, tracing pointer and memory behaviour to locate defects.",
+      "targetBloom": "Analyze"
+    },
+    {
+      "id": "CO5",
+      "text": "Evaluate alternative implementations of a routine and justify the preferred approach.",
+      "targetBloom": "Evaluate"
+    },
+    {
+      "id": "CO6",
+      "text": "Design a modular program with appropriate data structures and a clear decomposition into functions.",
+      "targetBloom": "Create"
+    }
+  ],
+  "pastQuestions": [
+    { "year": "2022", "text": "What is a variable? Explain the rules for naming an identifier in C and state which of the following are invalid identifiers and why: 2sum, total_marks, float, my-value." },
+    { "year": "2022", "text": "Explain the difference between the while loop and the do-while loop with a suitable example of each. State one situation in which a do-while loop is clearly preferable." },
+    { "year": "2022", "text": "Write a C program to check whether a given number is a palindrome without converting it to a string." },
+    { "year": "2022", "text": "What is an array? Explain how a two-dimensional array is stored in memory in row-major order with a suitable diagram." },
+    { "year": "2022", "text": "Explain the use of the break and continue statements with a suitable example of each." },
+    { "year": "2023", "text": "State the storage class specifiers available in C and explain the scope and lifetime of a static local variable with an example." },
+    { "year": "2023", "text": "Write a C program that reads n integers into an array and prints the second largest element without sorting the array." },
+    { "year": "2023", "text": "What is recursion? Write a recursive function to compute the greatest common divisor of two integers and trace its execution for gcd(48, 18)." },
+    { "year": "2023", "text": "Explain the difference between a structure and a union in C in terms of memory allocation, with a suitable example of each." },
+    { "year": "2023", "text": "What is a pointer? Explain pointer arithmetic and state what is meant by a dangling pointer and a null pointer." },
+    { "year": "2024", "text": "Write a C program that reads a text file and counts the number of lines, words and characters it contains." },
+    { "year": "2024", "text": "Explain the difference between the preprocessor directives #define and const in C, with an example of each." },
+    { "year": "2024", "text": "Write a C program that sorts an array of n strings into alphabetical order using an array of character pointers." },
+    { "year": "2024", "text": "Explain dynamic memory allocation in C. Distinguish between malloc, calloc and realloc, and state why every allocation must be matched with a call to free." },
+    { "year": "2024", "text": "Explain the difference between a compile-time error, a link-time error and a run-time error, with one example of each." }
+  ]
+}

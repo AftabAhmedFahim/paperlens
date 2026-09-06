@@ -1,0 +1,98 @@
+{
+  "paperId": "paper-cse2101-sample",
+  "facultyId": "fac-02",
+  "course": "CSE 2101",
+  "title": "CSE 2101 — Data Structures, Semester Final",
+  "totalMarks": 60,
+  "questions": [
+    {
+      "id": "1a",
+      "text": "Define the following data structures and state the time complexity of their insertion and deletion operations: (i) stack, (ii) queue, (iii) circular queue, (iv) doubly linked list. State one practical application of each.",
+      "marks": 8
+    },
+    {
+      "id": "1b",
+      "text": "Explain the asymptotic notations Big-O, Big-Omega and Big-Theta. For each notation, state what it bounds and give one example function. Why is Big-O the notation most commonly reported for an algorithm?",
+      "marks": 8
+    },
+    {
+      "id": "2a",
+      "text": "Write an algorithm to insert a node at a given position in a singly linked list and another to delete a node whose value is supplied. Show the pointer updates at each step for the list 10 -> 20 -> 30 -> 40 when 25 is inserted after 20.",
+      "marks": 7
+    },
+    {
+      "id": "2b",
+      "text": "Convert the infix expression A + B * ( C - D ) / E ^ F into its postfix form using a stack. Show the contents of the stack and the output string after every symbol is scanned.",
+      "marks": 7
+    },
+    {
+      "id": "3a",
+      "text": "Explain the insertion and deletion operations of a binary search tree. Construct a BST by inserting the keys 50, 30, 70, 20, 40, 60, 80 in that order, then show the tree after deleting the key 30.",
+      "marks": 8
+    },
+    {
+      "id": "3b",
+      "text": "Consider a graph with vertices {A, B, C, D, E, F} and edges A-B, A-C, B-D, C-D, C-E, D-F, E-F. Show the order in which the vertices are visited by breadth-first search and by depth-first search, both starting from A. State the time complexity of each traversal for a graph stored as an adjacency list.",
+      "marks": 7
+    },
+    {
+      "id": "4a",
+      "text": "What is hashing? Explain the collision resolution techniques of separate chaining, linear probing and quadratic probing. Insert the keys 12, 22, 32, 42 into a hash table of size 10 using the hash function h(k) = k mod 10 with linear probing, and show the final table.",
+      "marks": 8
+    },
+    {
+      "id": "4b",
+      "text": "A logging service appends several thousand records per second and occasionally reads the most recent one hundred records. Compare a dynamic array and a doubly linked list as the underlying store for this workload. Recommend one, and justify your recommendation in terms of insertion cost, traversal cost and memory overhead.",
+      "marks": 7
+    }
+  ],
+  "outcomes": [
+    {
+      "id": "CO1",
+      "text": "State the definitions, operations and complexity characteristics of the fundamental linear data structures.",
+      "targetBloom": "Remember"
+    },
+    {
+      "id": "CO2",
+      "text": "Explain asymptotic notation and describe how algorithmic cost is expressed and compared.",
+      "targetBloom": "Understand"
+    },
+    {
+      "id": "CO3",
+      "text": "Implement linked lists, stacks and queues to solve a stated computational problem.",
+      "targetBloom": "Apply"
+    },
+    {
+      "id": "CO4",
+      "text": "Apply tree and graph traversal algorithms to a given structure and trace their execution.",
+      "targetBloom": "Apply"
+    },
+    {
+      "id": "CO5",
+      "text": "Analyse and compare the efficiency of competing sorting and searching algorithms on a given input distribution.",
+      "targetBloom": "Analyze"
+    },
+    {
+      "id": "CO6",
+      "text": "Evaluate alternative data structure choices for a stated workload and justify the preferred option.",
+      "targetBloom": "Evaluate"
+    }
+  ],
+  "pastQuestions": [
+    { "year": "2022", "text": "Define the following data structures and state the time complexity of their insertion and deletion operations: (i) stack, (ii) queue, (iii) priority queue, (iv) singly linked list. State one practical application of each." },
+    { "year": "2022", "text": "What is an abstract data type? Distinguish between an abstract data type and a data structure with a suitable example." },
+    { "year": "2022", "text": "Write an algorithm to reverse a singly linked list without using any additional list. State its time and space complexity." },
+    { "year": "2022", "text": "Explain the working of the quick sort algorithm. Sort the array 38, 27, 43, 3, 9, 82, 10 using quick sort and show the array after every partition." },
+    { "year": "2022", "text": "What is a circular queue? Explain why a circular queue is preferred over a linear queue in a fixed-size buffer." },
+    { "year": "2023", "text": "Convert the infix expression P * Q + ( R - S ) / T into its postfix form using a stack. Show the stack contents and the output string after each symbol is scanned." },
+    { "year": "2023", "text": "Explain the difference between a binary tree and a binary search tree. Construct a binary search tree from the keys 45, 25, 65, 15, 35, 55, 75 and give its inorder traversal." },
+    { "year": "2023", "text": "What is a heap? Explain the build-heap operation and show how the array 4, 10, 3, 5, 1 is converted into a max-heap." },
+    { "year": "2023", "text": "Explain Dijkstra's shortest path algorithm. Apply it to a weighted graph of your choice with five vertices and show the distance table at each step." },
+    { "year": "2023", "text": "Distinguish between linear search and binary search in terms of prerequisite, time complexity and suitability for linked storage." },
+    { "year": "2024", "text": "What is hashing? Explain separate chaining, linear probing and quadratic probing as collision resolution techniques. Insert the keys 15, 25, 35, 45 into a hash table of size 10 using h(k) = k mod 10 with linear probing and show the resulting table." },
+    { "year": "2024", "text": "Explain the AVL tree rotations LL, RR, LR and RL with a suitable example of each." },
+    { "year": "2024", "text": "Write an algorithm for merge sort and derive its time complexity using the recurrence relation." },
+    { "year": "2024", "text": "What is a spanning tree? Explain Kruskal's algorithm for finding a minimum spanning tree with a suitable example." },
+    { "year": "2024", "text": "Explain the difference between a stack implemented with an array and a stack implemented with a linked list, in terms of memory usage and overflow behaviour." }
+  ]
+}
