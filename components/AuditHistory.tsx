@@ -1,6 +1,6 @@
 "use client";
 
-import type { Audit } from "./mockAudit";
+import type { Audit } from "@/lib/types";
 
 export interface AuditRecord {
   paperCourse: string;
