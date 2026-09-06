@@ -1,4 +1,7 @@
-import { Audit, Bloom } from "./mockAudit";
+"use client";
+
+import { useState, useEffect } from "react";
+import { Audit, Bloom, Question } from "@/lib/types";
 
 // ─── Health Score ────────────────────────────────────────────────────────────
 
@@ -13,17 +16,42 @@ function scoreColor(score: number) {
 }
 
 export function HealthScore({ score }: HealthScoreProps) {
-  const { ring, text, label, bg } = scoreColor(score);
+  const [displayScore, setDisplayScore] = useState(score);
+
+  useEffect(() => {
+    const start = displayScore;
+    const end = score;
+    if (start === end) return;
+    const duration = 1200;
+    const startTime = performance.now();
+
+    let animationFrameId: number;
+    function animate(now: number) {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      // easeOutCubic
+      const ease = 1 - Math.pow(1 - progress, 3);
+      const current = Math.round(start + (end - start) * ease);
+      setDisplayScore(current);
+      if (progress < 1) {
+        animationFrameId = requestAnimationFrame(animate);
+      }
+    }
+    animationFrameId = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [score]);
+
+  const { ring, text, label, bg } = scoreColor(displayScore);
   const circumference = 2 * Math.PI * 54;
-  const offset = circumference * (1 - score / 100);
+  const offset = circumference * (1 - displayScore / 100);
 
   return (
     <section className="pl-section">
       <h2 className="pl-section-title">Assessment Health Score</h2>
       <p className="pl-section-desc">
         A composite measure of outcome coverage, cognitive level spread, and
-        question integrity. Scores below 50 indicate structural issues that
-        should be resolved before the paper is finalised.
+        question integrity. Scores below 50 indicate serious structural issues,
+        50–75 indicate notable gaps, and scores above 75 represent a sound assessment.
       </p>
 
       <div className="pl-health-card" style={{ background: bg, borderColor: ring + "40" }}>
@@ -44,7 +72,7 @@ export function HealthScore({ score }: HealthScoreProps) {
               strokeDasharray={circumference}
               strokeDashoffset={offset}
               transform="rotate(-90 60 60)"
-              style={{ transition: "stroke-dashoffset 1s ease" }}
+              style={{ transition: "stroke-dashoffset 0.1s linear" }}
             />
             <text
               x="60" y="56"
@@ -54,7 +82,7 @@ export function HealthScore({ score }: HealthScoreProps) {
               fill={text}
               fontFamily="inherit"
             >
-              {score}
+              {displayScore}
             </text>
             <text
               x="60" y="74"
@@ -73,11 +101,11 @@ export function HealthScore({ score }: HealthScoreProps) {
             {label}
           </span>
           <p className="pl-health-desc" style={{ color: text }}>
-            {score >= 75
-              ? "This paper covers the course outcomes well and shows a healthy distribution of cognitive levels."
-              : score >= 50
+            {displayScore >= 75
+              ? "This paper covers the course outcomes well and shows a sound distribution of cognitive levels."
+              : displayScore >= 50
               ? "This paper has notable gaps. Address the high-severity issues before submission."
-              : "This paper has critical structural problems. Several outcomes are missing or severely under-weighted."}
+              : "This paper has serious structural issues. Several outcomes are missing or severely under-weighted."}
           </p>
         </div>
       </div>
@@ -105,8 +133,8 @@ export function CoverageGrid({ coverage, coTexts = {} }: CoverageGridProps) {
       <h2 className="pl-section-title">Outcome Coverage</h2>
       <p className="pl-section-desc">
         Each card represents one course outcome. The percentage reflects that
-        outcome's share of total marks. Targets should typically fall between
-        12% and 20% per outcome.
+        outcome&apos;s share of total marks. Targets should typically fall between
+        10% and 40% per outcome (below 10% is under-assessed, above 40% is over-weighted).
       </p>
 
       <div className="pl-coverage-grid">
@@ -191,24 +219,24 @@ interface BloomChartProps {
   totalMarks?: number;
 }
 
-export function BloomChart({ bloom, totalMarks = 100 }: BloomChartProps) {
+export function BloomChart({ bloom, totalMarks = 60 }: BloomChartProps) {
   const max = Math.max(...Object.values(bloom), 1);
 
   return (
     <section className="pl-section">
       <h2 className="pl-section-title">Cognitive Level Distribution</h2>
       <p className="pl-section-desc">
-        Bloom's Taxonomy levels are shown by total marks awarded at each level.
+        Bloom&apos;s Taxonomy levels are shown by total marks awarded at each level.
         The two lower-order levels — Remember and Understand — are shown in grey.
-        A balanced assessment should not concentrate more than 30% of marks in
+        A balanced assessment should not concentrate more than 50% of marks in
         these two levels.
       </p>
 
       <div className="pl-bloom-chart">
         {bloomOrder.map((level) => {
-          const marks = bloom[level];
-          const pct = Math.round((marks / totalMarks) * 100);
-          const barWidth = Math.round((marks / max) * 100);
+          const pct = bloom[level] ?? 0;
+          const marks = Math.round((pct / 100) * totalMarks);
+          const barWidth = Math.round((pct / max) * 100);
           const meta = bloomMeta[level];
 
           return (
@@ -230,7 +258,7 @@ export function BloomChart({ bloom, totalMarks = 100 }: BloomChartProps) {
               </div>
               <div className="pl-bloom-numbers">
                 <span className="pl-bloom-marks">{marks}</span>
-                <span className="pl-bloom-pct">{pct}%</span>
+                <span className="pl-bloom-pct">{Math.round(pct)}%</span>
               </div>
             </div>
           );
@@ -249,10 +277,13 @@ export function BloomChart({ bloom, totalMarks = 100 }: BloomChartProps) {
 
 // ─── Repeats ─────────────────────────────────────────────────────────────────
 
-const verdictMeta = {
-  flag: { label: "Flagged", color: "#b91c1c", bg: "#fef2f2", border: "#fecaca" },
-  warn: { label: "Warning",  color: "#b45309", bg: "#fffbeb", border: "#fde68a" },
-  ok:   { label: "Clear",    color: "#16a34a", bg: "#f0fdf4", border: "#bbf7d0" },
+const verdictMeta: Record<
+  "near-duplicate" | "related" | "distinct",
+  { label: string; color: string; bg: string; border: string }
+> = {
+  "near-duplicate": { label: "Flagged", color: "#b91c1c", bg: "#fef2f2", border: "#fecaca" },
+  related:          { label: "Related", color: "#b45309", bg: "#fffbeb", border: "#fde68a" },
+  distinct:         { label: "Clear",   color: "#16a34a", bg: "#f0fdf4", border: "#bbf7d0" },
 };
 
 interface RepeatCardProps {
@@ -261,7 +292,7 @@ interface RepeatCardProps {
 }
 
 function RepeatCard({ repeat, paperQuestion }: RepeatCardProps) {
-  const meta = verdictMeta[repeat.verdict];
+  const meta = verdictMeta[repeat.verdict] ?? verdictMeta.related;
 
   return (
     <div className="pl-repeat-card" style={{ borderColor: meta.border }}>
@@ -271,7 +302,7 @@ function RepeatCard({ repeat, paperQuestion }: RepeatCardProps) {
           {meta.label}
         </span>
         <span className="pl-repeat-sim" style={{ color: meta.color }}>
-          {repeat.similarity}% match
+          {Math.round(repeat.similarity * 100)}% match
         </span>
         <span className="pl-repeat-year">{repeat.matchYear}</span>
       </div>
@@ -314,8 +345,9 @@ export function Repeats({ repeats, questionTexts = {} }: RepeatsProps) {
     <section className="pl-section">
       <h2 className="pl-section-title">Repeated Questions</h2>
       <p className="pl-section-desc">
-        Questions are compared against five years of past papers from this
-        course. A similarity above 85% is flagged; 70–85% raises a warning.
+        Questions are compared against three years of past papers (2022–2024) from this
+        course. Questions with matching tasks are flagged as near-duplicates;
+        similar topics with differing tasks are marked as related.
       </p>
       <div className="pl-repeat-list">
         {repeats.map((r) => (
@@ -341,9 +373,10 @@ const severityMeta = {
 interface IssuesProps {
   issues: Audit["issues"];
   onGenerateFix?: (targetCo: string) => void;
+  generatingCo?: string | null;
 }
 
-export function Issues({ issues, onGenerateFix }: IssuesProps) {
+export function Issues({ issues, onGenerateFix, generatingCo }: IssuesProps) {
   const sorted = [...issues].sort((a, b) => {
     const order = { high: 0, medium: 1, low: 2 };
     return order[a.severity] - order[b.severity];
@@ -360,6 +393,7 @@ export function Issues({ issues, onGenerateFix }: IssuesProps) {
       <div className="pl-issues-list">
         {sorted.map((issue, i) => {
           const meta = severityMeta[issue.severity];
+          const isGenerating = generatingCo === issue.targetCo;
           return (
             <div
               key={i}
@@ -377,8 +411,9 @@ export function Issues({ issues, onGenerateFix }: IssuesProps) {
                 <button
                   className="pl-fix-btn"
                   onClick={() => onGenerateFix?.(issue.targetCo!)}
+                  disabled={isGenerating}
                 >
-                  Generate fix
+                  {isGenerating ? "Generating fix…" : "Generate fix"}
                 </button>
               )}
             </div>
@@ -388,3 +423,55 @@ export function Issues({ issues, onGenerateFix }: IssuesProps) {
     </section>
   );
 }
+
+// ─── Suggested Fix Card ──────────────────────────────────────────────────────
+
+interface SuggestedQuestionCardProps {
+  question: Question;
+  targetCo?: string;
+  onRerun: () => void;
+  onDismiss: () => void;
+  isRerunning?: boolean;
+}
+
+export function SuggestedQuestionCard({
+  question,
+  targetCo,
+  onRerun,
+  onDismiss,
+  isRerunning = false,
+}: SuggestedQuestionCardProps) {
+  return (
+    <div className="pl-suggested-card">
+      <div className="pl-suggested-header">
+        <div className="pl-suggested-tags">
+          <span className="pl-suggested-badge">Suggested Question</span>
+          <span className="pl-suggested-tag">Question {question.id}</span>
+          <span className="pl-suggested-tag">{question.marks} marks</span>
+          {targetCo && <span className="pl-suggested-tag">{targetCo}</span>}
+        </div>
+        <div className="pl-suggested-actions">
+          <button
+            type="button"
+            className="pl-rerun-btn"
+            onClick={onRerun}
+            disabled={isRerunning}
+          >
+            {isRerunning ? "Auditing…" : "Re-run audit"}
+          </button>
+          <button
+            type="button"
+            className="pl-dismiss-btn"
+            onClick={onDismiss}
+            disabled={isRerunning}
+            title="Reject and remove this suggestion"
+          >
+            Reject
+          </button>
+        </div>
+      </div>
+      <p className="pl-suggested-text">{question.text}</p>
+    </div>
+  );
+}
+
