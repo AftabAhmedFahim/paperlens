@@ -125,9 +125,14 @@ const statusMeta = {
 interface CoverageGridProps {
   coverage: Audit["coverage"];
   coTexts?: Record<string, string>;
+  suggestedQuestionIds?: string[];
 }
 
-export function CoverageGrid({ coverage, coTexts = {} }: CoverageGridProps) {
+export function CoverageGrid({
+  coverage,
+  coTexts = {},
+  suggestedQuestionIds = [],
+}: CoverageGridProps) {
   return (
     <section className="pl-section">
       <h2 className="pl-section-title">Outcome Coverage</h2>
@@ -188,9 +193,19 @@ export function CoverageGrid({ coverage, coTexts = {} }: CoverageGridProps) {
 
               {c.questionIds.length > 0 && (
                 <div className="pl-question-tags">
-                  {c.questionIds.map((q) => (
-                    <span key={q} className="pl-qtag">{q}</span>
-                  ))}
+                  {c.questionIds.map((q) => {
+                    const isSuggested = suggestedQuestionIds.includes(q);
+                    return (
+                      <span
+                        key={q}
+                        className={`pl-qtag ${isSuggested ? "pl-qtag-suggested" : ""}`}
+                        title={isSuggested ? "AI-suggested replacement question" : undefined}
+                      >
+                        {q}
+                        {isSuggested && <span className="pl-qtag-badge">AI Fix</span>}
+                      </span>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -430,16 +445,20 @@ interface SuggestedQuestionCardProps {
   question: Question;
   targetCo?: string;
   onRerun: () => void;
+  onAccept?: () => void;
   onDismiss: () => void;
   isRerunning?: boolean;
+  isAccepted?: boolean;
 }
 
 export function SuggestedQuestionCard({
   question,
   targetCo,
   onRerun,
+  onAccept,
   onDismiss,
   isRerunning = false,
+  isAccepted = false,
 }: SuggestedQuestionCardProps) {
   return (
     <div className="pl-suggested-card">
@@ -449,8 +468,21 @@ export function SuggestedQuestionCard({
           <span className="pl-suggested-tag">Question {question.id}</span>
           <span className="pl-suggested-tag">{question.marks} marks</span>
           {targetCo && <span className="pl-suggested-tag">{targetCo}</span>}
+          {isAccepted && (
+            <span className="pl-suggested-saved-badge">Saved to Paper</span>
+          )}
         </div>
         <div className="pl-suggested-actions">
+          {onAccept && (
+            <button
+              type="button"
+              className={`pl-accept-btn ${isAccepted ? "pl-accept-btn-saved" : ""}`}
+              onClick={onAccept}
+              disabled={isRerunning || isAccepted}
+            >
+              {isAccepted ? "✓ Accepted" : "Accept fix"}
+            </button>
+          )}
           <button
             type="button"
             className="pl-rerun-btn"

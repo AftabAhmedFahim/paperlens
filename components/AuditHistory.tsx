@@ -3,6 +3,7 @@
 import type { Audit } from "@/lib/types";
 
 export interface AuditRecord {
+  id?: string;
   paperCourse: string;
   healthScore: number;
   timestamp: string;
@@ -41,10 +42,11 @@ function scoreDot(score: number) {
 interface AuditHistoryProps {
   records: AuditRecord[];
   onSelect: (record: AuditRecord) => void;
+  onDelete?: (recordId: string) => void;
   facultyName: string;
 }
 
-export function AuditHistory({ records, onSelect, facultyName }: AuditHistoryProps) {
+export function AuditHistory({ records, onSelect, onDelete, facultyName }: AuditHistoryProps) {
   if (records.length === 0) {
     return (
       <section className="pl-section">
@@ -80,11 +82,15 @@ export function AuditHistory({ records, onSelect, facultyName }: AuditHistoryPro
           });
 
           return (
-            <button
-              key={i}
+            <div
+              key={r.id || i}
               className="pl-history-row"
               onClick={() => onSelect(r)}
-              type="button"
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") onSelect(r);
+              }}
             >
               <span className="pl-history-dot" style={{ background: scoreDot(r.healthScore) }} />
               <span className="pl-history-course">{r.paperCourse}</span>
@@ -95,7 +101,21 @@ export function AuditHistory({ records, onSelect, facultyName }: AuditHistoryPro
               <span className="pl-history-time">
                 {dateStr} {timeStr}
               </span>
-            </button>
+              {onDelete && r.id && (
+                <button
+                  type="button"
+                  className="pl-history-delete-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(r.id!);
+                  }}
+                  title="Delete this audit record"
+                  aria-label="Delete audit"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
           );
         })}
       </div>
