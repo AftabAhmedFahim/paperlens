@@ -56,15 +56,15 @@ export function UploadPanel({ label, hint, value, onChange, id }: UploadPanelPro
 // ─── Analyzing State ─────────────────────────────────────────────────────────
 
 const STEPS = [
-  { id: "parse",   label: "Parsing questions and course outcomes",        durationMs: 800  },
-  { id: "map",     label: "Mapping questions to course outcomes",          durationMs: 1400 },
-  { id: "bloom",   label: "Assessing cognitive levels (Bloom's Taxonomy)", durationMs: 1600 },
-  { id: "repeat",  label: "Comparing against past-year papers",            durationMs: 1800 },
-  { id: "score",   label: "Computing assessment health score",             durationMs: 900  },
+  { id: "parse",   label: "Parsing questions and course outcomes",        durationMs: 400 },
+  { id: "map",     label: "Mapping questions to course outcomes",          durationMs: 450 },
+  { id: "bloom",   label: "Assessing cognitive levels (Bloom's Taxonomy)", durationMs: 450 },
+  { id: "repeat",  label: "Comparing against past-year papers",            durationMs: 450 },
+  { id: "score",   label: "Computing assessment health score",             durationMs: 450 },
 ];
 
 interface AnalyzingProps {
-  onComplete: () => void;
+  onComplete?: () => void;
 }
 
 export function Analyzing({ onComplete }: AnalyzingProps) {
@@ -79,7 +79,7 @@ export function Analyzing({ onComplete }: AnalyzingProps) {
       if (cancelled) return;
       const step = STEPS[idx];
       if (!step) {
-        setTimeout(() => { if (!cancelled) onComplete(); }, 400);
+        setTimeout(() => { if (!cancelled && onComplete) onComplete(); }, 200);
         return;
       }
       setActiveStep(idx);
@@ -87,7 +87,7 @@ export function Analyzing({ onComplete }: AnalyzingProps) {
         if (cancelled) return;
         setDone((d) => new Set([...d, idx]));
         idx++;
-        setTimeout(advance, 200);
+        setTimeout(advance, 80);
       }, step.durationMs);
     }
 
