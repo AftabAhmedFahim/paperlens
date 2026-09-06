@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import Link from "next/link";
 import samplePaperJson from "@/data/sample-paper.json";
 import sampleCosJson from "@/data/sample-cos.json";
 import facultyData from "@/data/faculty.json";
-import { mockAudit } from "@/components/mockAudit";
 import { Audit, Paper, CourseOutcome, Question, Bloom } from "@/lib/types";
 import { UploadPanel, Analyzing } from "@/components/UploadAndAnalyzing";
 import {
@@ -15,20 +15,27 @@ import {
   Issues,
   SuggestedQuestionCard,
 } from "@/components/ReportSections";
-import { FacultySwitcher, Faculty } from "@/components/FacultySwitcher";
 import {
   AuditHistory,
   AuditRecord,
-  loadHistory,
   saveHistory,
 } from "@/components/AuditHistory";
 import { PaperLibrary, PaperMeta } from "@/components/PaperLibrary";
 
 type Screen = "upload" | "analyzing" | "report";
+type Tab = "dashboard" | "library" | "history";
+
+interface Faculty {
+  id: string;
+  name: string;
+  department: string;
+  courses: string[];
+}
 
 const FACULTY: Faculty[] = facultyData as Faculty[];
 
 export default function Home() {
+  const [activeTab, setActiveTab] = useState<Tab>("dashboard");
   const [screen, setScreen] = useState<Screen>("upload");
   const [paper, setPaper] = useState<Paper>(samplePaperJson as Paper);
   const [courseOutcomes, setCourseOutcomes] = useState<CourseOutcome[]>(sampleCosJson as CourseOutcome[]);
@@ -36,6 +43,8 @@ export default function Home() {
   const [cosText, setCosText] = useState("");
   const [currentAudit, setCurrentAudit] = useState<Audit | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // ── Database & Paper Library state ──
   const [currentPaperId, setCurrentPaperId] = useState<string | null>("paper-cse3103-sample");
@@ -58,6 +67,14 @@ export default function Home() {
   // ── Faculty state ──
   const [activeFaculty, setActiveFaculty] = useState<Faculty>(FACULTY[0]);
   const [history, setHistory] = useState<AuditRecord[]>([]);
+
+  // Toast helper
+  const showToast = useCallback((msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 2800);
+  }, []);
 
   // Fetch papers for active faculty
   const fetchPapers = useCallback(async (facultyId: string) => {
@@ -90,262 +107,193 @@ export default function Home() {
           audit: a.audit,
         }));
         setHistory(mapped);
-        return;
       }
     } catch (err) {
-      console.warn("[fetchAuditsForPaper] server fetch failed, fallback to localStorage:", err);
+      console.error("[fetchAuditsForPaper] error:", err);
     }
-    setHistory(loadHistory(activeFaculty.id));
-  }, [activeFaculty.id, paper.course]);
+  }, [paper.course]);
 
-  // Load papers and initial paper state/audits on mount and faculty change
+  // Initial load
   useEffect(() => {
     fetchPapers(activeFaculty.id);
-    const pid = currentPaperId || (activeFaculty.id === "fac-01" ? "paper-cse3103-sample" : null);
-    if (pid) {
-      fetchAuditsForPaper(pid);
-      fetch(`/api/papers/${pid}`)
-        .then((r) => (r.ok ? r.json() : null))
-        .then((data) => {
-          if (data && data.paper) {
-            setPaper(data.paper);
-            setCourseOutcomes(data.courseOutcomes);
-            const hasSuggested = data.paper.questions.some((q: any) => q.is_suggested);
-            if (hasSuggested) setFixAccepted(true);
-          }
-        })
-        .catch(() => {});
-    } else {
-      setHistory(loadHistory(activeFaculty.id));
+  }, [activeFaculty.id, fetchPapers]);
+
+  useEffect(() => {
+    if (currentPaperId) {
+      fetchAuditsForPaper(currentPaperId);
     }
-  }, [activeFaculty.id, fetchPapers, fetchAuditsForPaper]);
+  }, [currentPaperId, fetchAuditsForPaper]);
 
-  const switchFaculty = useCallback((f: Faculty) => {
-    setActiveFaculty(f);
-    setPaper(samplePaperJson as Paper);
-    setCourseOutcomes(sampleCosJson as CourseOutcome[]);
-    setPaperText("");
-    setCosText("");
-    setCurrentAudit(null);
-    setSuggestedFix(null);
-    setFixAccepted(false);
-    setError(null);
-    setScreen("upload");
-
-    const defaultPid = f.id === "fac-01" ? "paper-cse3103-sample" : null;
-    setCurrentPaperId(defaultPid);
-    fetchPapers(f.id);
-    if (defaultPid) {
-      fetchAuditsForPaper(defaultPid);
-    } else {
-      setHistory([]);
+  // Keyboard shortcut: Ctrl+Enter to audit
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+        if (screen === "upload" && activeTab === "dashboard") {
+          e.preventDefault();
+          startAudit();
+        }
+      }
     }
-  }, [fetchPapers, fetchAuditsForPaper]);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [screen, activeTab, paperText, cosText]);
 
-  async function loadSample() {
-    setError(null);
-    setSuggestedFix(null);
-    setFixAccepted(false);
-
-    try {
-      // Ensure the sample paper in DB is reset to pristine 8 questions (60 marks)
-      await fetch("/api/papers/paper-cse3103-sample", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          questions: samplePaperJson.questions,
-        }),
-      });
-    } catch (err) {
-      console.warn("Could not reset sample paper in DB:", err);
-    }
-
+  // Load sample paper and course outcomes
+  function loadSample() {
+    const p = samplePaperJson as Paper;
+    const c = sampleCosJson as CourseOutcome[];
+    setPaper(p);
+    setCourseOutcomes(c);
+    setPaperText(JSON.stringify(p, null, 2));
+    setCosText(JSON.stringify(c, null, 2));
     setCurrentPaperId("paper-cse3103-sample");
-    setPaper(samplePaperJson as Paper);
-    setCourseOutcomes(sampleCosJson as CourseOutcome[]);
-    setPaperText(JSON.stringify(samplePaperJson, null, 2));
-    setCosText(JSON.stringify(sampleCosJson, null, 2));
-    fetchAuditsForPaper("paper-cse3103-sample");
-    fetchPapers(activeFaculty.id);
+    setSuggestedFix(null);
+    setFixAccepted(false);
+    setFixError(null);
+    showToast("Sample paper & outcomes loaded");
   }
 
+  // Handle selecting a paper from the Library
   async function handleSelectPaper(paperId: string) {
     try {
       const res = await fetch(`/api/papers/${paperId}`);
-      if (!res.ok) {
-        throw new Error(`Failed to load paper (${res.status})`);
-      }
+      if (!res.ok) throw new Error("Failed to load paper");
       const data = await res.json();
-      setCurrentPaperId(data.id);
-      setPaper(data.paper);
-      setCourseOutcomes(data.courseOutcomes);
-      setPaperText(JSON.stringify(data.paper, null, 2));
-      setCosText(JSON.stringify(data.courseOutcomes, null, 2));
+      const p: Paper = {
+        course: data.paper.course,
+        totalMarks: data.paper.totalMarks,
+        questions: data.paper.questions,
+      };
+      setPaper(p);
+      setPaperText(JSON.stringify(p, null, 2));
+      setCurrentPaperId(paperId);
       setSuggestedFix(null);
       setFixAccepted(false);
-      setError(null);
-      fetchAuditsForPaper(data.id);
-      runAudit(data.paper, data.courseOutcomes, data.id);
-    } catch (err: any) {
+      setFixError(null);
+      setActiveTab("dashboard");
+      setScreen("upload");
+      showToast(`Loaded ${data.paper.course} paper`);
+    } catch (err) {
       console.error("[handleSelectPaper] error:", err);
-      setError(err?.message || "Failed to load paper from library.");
+      showToast("Error loading paper");
     }
   }
 
+  // Handle deleting a paper from the Library
   async function handleDeletePaper(paperId: string) {
     try {
       const res = await fetch(`/api/papers/${paperId}`, { method: "DELETE" });
-      if (!res.ok) {
-        throw new Error(`Failed to delete paper (${res.status})`);
+      if (res.ok) {
+        if (currentPaperId === paperId) {
+          setCurrentPaperId(null);
+        }
+        fetchPapers(activeFaculty.id);
+        showToast("Paper deleted from library");
       }
-      fetchPapers(activeFaculty.id);
-      if (currentPaperId === paperId) {
-        setCurrentPaperId("paper-cse3103-sample");
-        setHistory([]);
-      }
-    } catch (err: any) {
+    } catch (err) {
       console.error("[handleDeletePaper] error:", err);
-      setError(err?.message || "Failed to delete paper.");
     }
   }
 
-  async function handleDeleteAudit(auditId: string) {
-    try {
-      const res = await fetch(`/api/audits/${auditId}`, { method: "DELETE" });
-      if (!res.ok) {
-        throw new Error(`Failed to delete audit (${res.status})`);
+  // Start analysis
+  async function startAudit() {
+    let currentPaperObj = paper;
+    let currentCosObj = courseOutcomes;
+
+    if (paperText.trim()) {
+      try {
+        currentPaperObj = JSON.parse(paperText);
+        setPaper(currentPaperObj);
+      } catch {
+        setError("Invalid question paper JSON. Please verify formatting.");
+        return;
       }
-      setHistory((prev) => prev.filter((r) => r.id !== auditId));
-      fetchPapers(activeFaculty.id);
-    } catch (err: any) {
-      console.error("[handleDeleteAudit] error:", err);
-      setError(err?.message || "Failed to delete audit.");
     }
-  }
 
-  async function runAudit(paperToAudit: Paper, cosToAudit: CourseOutcome[], paperId?: string) {
-    setScreen("analyzing");
+    if (cosText.trim()) {
+      try {
+        currentCosObj = JSON.parse(cosText);
+        setCourseOutcomes(currentCosObj);
+      } catch {
+        setError("Invalid course outcomes JSON. Please verify formatting.");
+        return;
+      }
+    }
+
     setError(null);
+    setScreen("analyzing");
+  }
 
-    const targetPaperId = paperId || currentPaperId;
-    const minWaitPromise = new Promise((resolve) => setTimeout(resolve, 2500));
-    const fetchPromise = fetch("/api/analyze", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ paper: paperToAudit, courseOutcomes: cosToAudit }),
-    }).then(async (res) => {
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || `Server responded with status ${res.status}`);
-      }
-      return (await res.json()) as Audit;
-    });
-
+  // Run audit against server API
+  async function runAudit(paperData: Paper, cosData: CourseOutcome[]) {
     try {
-      const [_, result] = await Promise.all([minWaitPromise, fetchPromise]);
-      setCurrentAudit(result);
+      const res = await fetch("/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paper: paperData, courseOutcomes: cosData }),
+      });
 
-      let newRecordId: string | undefined;
-      if (targetPaperId) {
+      if (!res.ok) {
+        throw new Error(`Server returned status ${res.status}`);
+      }
+
+      const audit: Audit = await res.json();
+      setCurrentAudit(audit);
+      setScreen("report");
+
+      // Save to SQLite
+      if (currentPaperId) {
         try {
-          const saveRes = await fetch(`/api/papers/${targetPaperId}/audits`, {
+          const saveRes = await fetch(`/api/papers/${currentPaperId}/audits`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              healthScore: result.healthScore,
-              audit: result,
+              healthScore: audit.healthScore,
+              audit,
               facultyId: activeFaculty.id,
             }),
           });
           if (saveRes.ok) {
-            const saveData = await saveRes.json();
-            newRecordId = saveData.id;
+            fetchAuditsForPaper(currentPaperId);
           }
-        } catch (saveErr) {
-          console.warn("[runAudit] failed to persist audit to DB:", saveErr);
+        } catch (dbErr) {
+          console.error("[runAudit] failed to save audit to DB:", dbErr);
         }
       }
 
-      const record: AuditRecord = {
-        id: newRecordId,
-        paperCourse: paperToAudit.course || "CSE 3103",
-        healthScore: result.healthScore,
-        timestamp: new Date().toISOString(),
-        issueCount: result.issues.length,
-        audit: result,
-      };
-      const updated = [record, ...history.filter((h) => h.id !== newRecordId)];
-      setHistory(updated);
-      saveHistory(activeFaculty.id, updated);
-      fetchPapers(activeFaculty.id);
-
-      setScreen("report");
+      showToast("Audit completed successfully!");
     } catch (err: any) {
-      console.error("[runAudit] failed:", err);
-      setError(err?.message || "Failed to analyze paper. Using fallback audit.");
-      setCurrentAudit(mockAudit);
-      setScreen("report");
+      console.error("[runAudit] error:", err);
+      setError(err?.message || "Could not analyze question paper. Please try again.");
+      setScreen("upload");
     }
   }
 
-  function startAudit() {
-    let parsedPaper: Paper = samplePaperJson as Paper;
-    let parsedCos: CourseOutcome[] = sampleCosJson as CourseOutcome[];
-
-    if (paperText.trim()) {
-      try {
-        parsedPaper = JSON.parse(paperText);
-      } catch {
-        parsedPaper = samplePaperJson as Paper;
-      }
-    }
-    if (cosText.trim()) {
-      try {
-        parsedCos = JSON.parse(cosText);
-      } catch {
-        parsedCos = sampleCosJson as CourseOutcome[];
-      }
-    }
-
-    setPaper(parsedPaper);
-    setCourseOutcomes(parsedCos);
-    runAudit(parsedPaper, parsedCos, currentPaperId || undefined);
+  function resetToUpload() {
+    setScreen("upload");
+    setCurrentAudit(null);
+    setSuggestedFix(null);
+    setFixAccepted(false);
+    setFixError(null);
   }
 
-  function loadFromHistory(record: AuditRecord) {
-    setCurrentAudit(record.audit);
-    setScreen("report");
-  }
-
+  // Generate Fix for an issue
   async function handleGenerateFix(issue: Audit["issues"][0], index: number) {
-    setGeneratingIndex(index);
-    setError(null);
-
     try {
-      // 1. Detect if the issue is a repeat or specific to a question (e.g. "1a is a near-duplicate...", "2a resembles...")
+      setGeneratingIndex(index);
+      setError(null);
+      setFixError(null);
+
       const repeatMatch = issue.message.match(/^(\w+)\s+(is a near-duplicate|resembles)/);
       const targetQId = repeatMatch ? repeatMatch[1] : undefined;
 
-      // 2. Determine targetCo and targetBloom
-      let targetCo = issue.targetCo;
-      let targetBloom: Bloom = "Apply";
+      const coMatch = issue.message.match(/\b(CO\d+)\b/);
+      const targetCo = issue.targetCo || (coMatch ? coMatch[1] : targetQId ? "CO1" : "CO6");
 
-      if (targetQId) {
-        const qa = currentAudit?.questionAnalysis?.find((q) => q.id === targetQId);
-        if (qa) {
-          targetCo = qa.co;
-          targetBloom = qa.bloom;
-        } else if (!targetCo) {
-          targetCo = targetQId.startsWith("1") ? "CO1" : targetQId.startsWith("2") ? "CO2" : targetQId.startsWith("3") ? "CO3" : "CO4";
-        }
-      } else if (!targetCo) {
-        // e.g. Bloom skew: "55% of marks sit at Remember or Understand"
-        targetCo = courseOutcomes.find((c) => c.targetBloom === "Evaluate" || c.targetBloom === "Analyze")?.id || "CO6";
-        targetBloom = "Evaluate";
-      } else {
-        const co = courseOutcomes.find((c) => c.id === targetCo);
-        targetBloom = co?.targetBloom ?? (targetCo === "CO6" ? "Evaluate" : "Apply");
-      }
+      const targetBloom: Bloom =
+        issue.message.includes("Remember or Understand")
+          ? "Evaluate"
+          : ((issue as any).targetBloom || "Apply");
 
       const res = await fetch("/api/fix", {
         method: "POST",
@@ -394,6 +342,8 @@ export default function Home() {
       };
 
       setPaper(updatedPaper);
+      setPaperText(JSON.stringify(updatedPaper, null, 2));
+
       setSuggestedFix({
         question: newQuestion,
         targetCo: targetCo || "CO6",
@@ -404,7 +354,9 @@ export default function Home() {
       setFixAccepted(false);
       setFixError(null);
 
-      // Smooth scroll to fix
+      showToast(`Generated fix for Question ${newQuestion.id}`);
+
+      // Smooth scroll to ensure the suggested fix is visible
       setTimeout(() => {
         const el = document.getElementById("suggested-fix-card") || document.getElementById(`issue-row-${index}`);
         if (el) {
@@ -416,11 +368,13 @@ export default function Home() {
       const errMsg = err?.message || "Failed to generate fix question.";
       setError(errMsg);
       setFixError({ index, message: errMsg });
+      showToast(`Fix failed: ${errMsg}`);
     } finally {
       setGeneratingIndex(null);
     }
   }
 
+  // Accept suggested fix
   async function handleAcceptFix() {
     if (!suggestedFix || !currentPaperId) return;
     try {
@@ -440,18 +394,19 @@ export default function Home() {
       if (res.ok) {
         setFixAccepted(true);
         fetchPapers(activeFaculty.id);
+        showToast("Fix saved to database");
       }
     } catch (err) {
       console.error("[handleAcceptFix] error:", err);
     }
   }
 
+  // Re-run audit with updated questions
   async function handleRerunAudit() {
     setIsRerunning(true);
     setError(null);
 
     try {
-      // Ensure the suggested fix is saved to SQLite
       if (suggestedFix && currentPaperId && !fixAccepted) {
         const questionsToSave = paper.questions.map((q) => ({
           id: q.id,
@@ -480,10 +435,9 @@ export default function Home() {
       const updatedAudit: Audit = await res.json();
       setCurrentAudit(updatedAudit);
 
-      let newRecordId: string | undefined;
       if (currentPaperId) {
         try {
-          const saveRes = await fetch(`/api/papers/${currentPaperId}/audits`, {
+          await fetch(`/api/papers/${currentPaperId}/audits`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -492,27 +446,13 @@ export default function Home() {
               facultyId: activeFaculty.id,
             }),
           });
-          if (saveRes.ok) {
-            const saveData = await saveRes.json();
-            newRecordId = saveData.id;
-          }
-        } catch (saveErr) {
-          console.warn("[handleRerunAudit] failed to persist audit to DB:", saveErr);
+          fetchAuditsForPaper(currentPaperId);
+        } catch (dbErr) {
+          console.error("[handleRerunAudit] DB save error:", dbErr);
         }
       }
 
-      const record: AuditRecord = {
-        id: newRecordId,
-        paperCourse: paper.course || "CSE 3103",
-        healthScore: updatedAudit.healthScore,
-        timestamp: new Date().toISOString(),
-        issueCount: updatedAudit.issues.length,
-        audit: updatedAudit,
-      };
-      const updated = [record, ...history.filter((h) => h.id !== newRecordId)];
-      setHistory(updated);
-      saveHistory(activeFaculty.id, updated);
-      fetchPapers(activeFaculty.id);
+      showToast(`Audit re-run! Health score: ${updatedAudit.healthScore}/100`);
     } catch (err: any) {
       console.error("[handleRerunAudit] error:", err);
       setError(err?.message || "Failed to re-run audit.");
@@ -521,6 +461,7 @@ export default function Home() {
     }
   }
 
+  // Reject suggestion
   async function handleRejectSuggestion() {
     if (!suggestedFix) return;
 
@@ -534,11 +475,13 @@ export default function Home() {
     }
 
     const total = restoredQuestions.reduce((s, q) => s + (q.marks || 0), 0);
-    setPaper({
+    const restoredPaper: Paper = {
       ...paper,
       questions: restoredQuestions,
       totalMarks: total,
-    });
+    };
+    setPaper(restoredPaper);
+    setPaperText(JSON.stringify(restoredPaper, null, 2));
     setSuggestedFix(null);
     setFixAccepted(false);
     setFixError(null);
@@ -555,37 +498,270 @@ export default function Home() {
         console.error("[handleRejectSuggestion] error reverting DB:", err);
       }
     }
+
+    showToast("Suggestion dismissed");
   }
 
-  const totalMarks = paper.questions.reduce((s, q) => s + (q.marks || 0), 0) || paper.totalMarks || 60;
-  const questionTexts = Object.fromEntries(paper.questions.map((q) => [q.id, q.text]));
-  const coTexts = Object.fromEntries(courseOutcomes.map((co) => [co.id, co.text]));
-  const audit = currentAudit ?? mockAudit;
+  // Load audit report from history
+  function loadFromHistory(record: AuditRecord) {
+    setCurrentAudit(record.audit);
+    setScreen("report");
+    setActiveTab("dashboard");
+    setSuggestedFix(null);
+    setFixAccepted(false);
+    showToast(`Loaded audit record (${record.healthScore}/100)`);
+  }
+
+  // Delete an audit record
+  async function handleDeleteAudit(recordId: string) {
+    try {
+      const res = await fetch(`/api/audits/${recordId}`, { method: "DELETE" });
+      if (res.ok && currentPaperId) {
+        fetchAuditsForPaper(currentPaperId);
+        showToast("Audit record deleted");
+      }
+    } catch (err) {
+      console.error("[handleDeleteAudit] error:", err);
+    }
+  }
+
+  // Switch faculty
+  function cycleFaculty() {
+    const currentIndex = FACULTY.findIndex((f) => f.id === activeFaculty.id);
+    const nextIndex = (currentIndex + 1) % FACULTY.length;
+    const nextFaculty = FACULTY[nextIndex];
+    setActiveFaculty(nextFaculty);
+    fetchPapers(nextFaculty.id);
+    showToast(`Switched to ${nextFaculty.name}`);
+  }
+
+  // Sign out
+  async function handleSignOut() {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+      window.location.href = "/login";
+    } catch {
+      window.location.href = "/login";
+    }
+  }
+
+  const coTexts = useMemo(
+    () => Object.fromEntries(courseOutcomes.map((c) => [c.id, c.text || (c as any).description])),
+    [courseOutcomes]
+  );
+
+  const questionTexts = useMemo(
+    () => Object.fromEntries(paper.questions.map((q) => [q.id, q.text])),
+    [paper.questions]
+  );
+
+  const totalMarks = paper.questions.reduce((s, q) => s + (q.marks || 0), 0);
+  const audit = currentAudit;
 
   return (
-    <>
-      {/* ── Navigation ── */}
-      <nav className="pl-nav">
-        <div className="pl-nav-logo">
-          <span className="pl-nav-logo-mark">PL</span>
+    <div style={{ display: "flex", minHeight: "100vh", background: "var(--cream)" }}>
+      {/* ═══════════════════════════════════════════════════════════════════
+          SIDEBAR
+      ═══════════════════════════════════════════════════════════════════ */}
+      <aside className={`sidebar ${sidebarOpen ? "open" : ""}`} id="sidebar">
+        <Link href="/" className="logo">
+          <span className="logo-icon">PL</span>
           PaperLens
-        </div>
-        <span className="pl-nav-tag">Exam Paper Auditor</span>
-        <FacultySwitcher
-          faculty={FACULTY}
-          active={activeFaculty}
-          onSwitch={switchFaculty}
-        />
-      </nav>
+        </Link>
 
-      <main className="pl-page">
-        {error && (
-          <div className="pl-error-banner" role="alert">
-            <span>{error}</span>
+        <div className="nav-label">Workspace</div>
+
+        <button
+          type="button"
+          className={`nav-item ${activeTab === "dashboard" ? "active" : ""}`}
+          onClick={() => {
+            setActiveTab("dashboard");
+            setSidebarOpen(false);
+          }}
+        >
+          <svg viewBox="0 0 24 24">
+            <rect x="3" y="3" width="7" height="7" rx="1" />
+            <rect x="14" y="3" width="7" height="7" rx="1" />
+            <rect x="3" y="14" width="7" height="7" rx="1" />
+            <rect x="14" y="14" width="7" height="7" rx="1" />
+          </svg>
+          Dashboard
+        </button>
+
+        <button
+          type="button"
+          className={`nav-item ${activeTab === "library" ? "active" : ""}`}
+          onClick={() => {
+            setActiveTab("library");
+            setSidebarOpen(false);
+          }}
+        >
+          <svg viewBox="0 0 24 24">
+            <path d="M4 5.5A2.5 2.5 0 016.5 3H20v16H6.5A2.5 2.5 0 014 16.5z" />
+            <path d="M4 16.5A2.5 2.5 0 016.5 14H20" />
+          </svg>
+          Paper Library
+          <span className="badge">{papers.length}</span>
+        </button>
+
+        <button
+          type="button"
+          className={`nav-item ${activeTab === "history" ? "active" : ""}`}
+          onClick={() => {
+            setActiveTab("history");
+            setSidebarOpen(false);
+          }}
+        >
+          <svg viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 7v5l3 3" />
+          </svg>
+          Audit History
+          <span className="badge">{history.length}</span>
+        </button>
+
+        <Link
+          href="/landing"
+          className="nav-item"
+          style={{ textDecoration: "none" }}
+        >
+          <svg viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 16v-4" />
+            <path d="M12 8h.01" />
+          </svg>
+          Product Tour
+        </Link>
+
+        <div className="nav-label" style={{ marginTop: 14 }}>
+          Account
+        </div>
+
+        <button
+          type="button"
+          className="nav-item"
+          onClick={() => showToast("Notifications are up to date")}
+        >
+          <svg viewBox="0 0 24 24">
+            <path d="M18 8a6 6 0 00-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
+            <path d="M10 21h4" />
+          </svg>
+          Notifications
+        </button>
+
+        <div className="profile-section">
+          <div className="profile-row">
+            <div className="avatar" style={{ background: "#4f46e5" }}>
+              {activeFaculty.name.split(" ").map((w) => w[0]).slice(0, 2).join("")}
+            </div>
+            <div className="info">
+              <div className="name">{activeFaculty.name}</div>
+              <div className="dept">{activeFaculty.department}</div>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            className="faculty-switch-btn"
+            onClick={cycleFaculty}
+            title="Switch faculty profile"
+          >
+            🔄 Switch Profile ({activeFaculty.name.split(" ")[1] || "Faculty"})
+          </button>
+
+          <button
+            type="button"
+            className="logout-btn"
+            onClick={handleSignOut}
+          >
+            Sign out
+          </button>
+        </div>
+      </aside>
+
+      {/* Sidebar overlay for mobile */}
+      <div
+        className={`sidebar-overlay ${sidebarOpen ? "active" : ""}`}
+        onClick={() => setSidebarOpen(false)}
+      />
+
+      {/* ═══════════════════════════════════════════════════════════════════
+          MAIN CONTENT AREA
+      ═══════════════════════════════════════════════════════════════════ */}
+      <main className="main">
+        {/* Header */}
+        <header className="main-header">
+          <div>
             <button
               type="button"
-              className="pl-error-dismiss"
+              className="mobile-menu-btn"
+              onClick={() => setSidebarOpen(true)}
+              aria-label="Open menu"
+            >
+              ☰
+            </button>
+            <h1>
+              {activeTab === "dashboard" && <>Audit <span>Dashboard</span></>}
+              {activeTab === "library" && <>Paper <span>Library</span></>}
+              {activeTab === "history" && <>Audit <span>History</span></>}
+            </h1>
+            <div className="sub">
+              {activeTab === "dashboard" && "Upload a paper, run an audit, and review the quality report"}
+              {activeTab === "library" && "Manage and load your saved exam question papers"}
+              {activeTab === "history" && "Review and reload past audit reports and scores"}
+            </div>
+          </div>
+
+          <div className="header-actions">
+            <Link href="/landing" className="btn btn-outline btn-sm" style={{ textDecoration: "none" }}>
+              Explore Features
+            </Link>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, background: "#fff", padding: "4px 12px 4px 6px", borderRadius: 30, border: "1.5px solid var(--gray-light)" }}>
+              <span
+                style={{
+                  width: 30,
+                  height: 30,
+                  borderRadius: 8,
+                  background: "#4f46e5",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#fff",
+                  fontWeight: 800,
+                  fontSize: 12,
+                }}
+              >
+                {activeFaculty.name.split(" ").map((w) => w[0]).slice(0, 2).join("")}
+              </span>
+              <span style={{ fontSize: "0.82rem", fontWeight: 600, color: "var(--navy)" }}>
+                {activeFaculty.name}
+              </span>
+            </div>
+          </div>
+        </header>
+
+        {/* Global Error Banner */}
+        {error && (
+          <div
+            style={{
+              background: "#fef2f2",
+              border: "1px solid #fecaca",
+              color: "#b91c1c",
+              padding: "12px 18px",
+              borderRadius: 12,
+              marginBottom: 24,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 12,
+            }}
+            role="alert"
+          >
+            <span>⚠️ {error}</span>
+            <button
+              type="button"
               onClick={() => setError(null)}
+              style={{ background: "none", border: "none", color: "#b91c1c", cursor: "pointer", fontWeight: 700 }}
               aria-label="Dismiss error"
             >
               ✕
@@ -594,22 +770,149 @@ export default function Home() {
         )}
 
         {/* ══════════════════════════════════════════════════════════════
-            UPLOAD SCREEN
+            TAB 1: DASHBOARD
         ══════════════════════════════════════════════════════════════ */}
-        {screen === "upload" && (
-          <>
-            <div className="pl-upload-hero">
-              <h1>
-                Audit a question paper<br />
-                <em>before</em> it reaches students.
-              </h1>
-              <p>
-                PaperLens evaluates your draft exam against its course outcomes,
-                checks cognitive level distribution, and flags questions that
-                have appeared in past years. It evaluates — not generates.
-              </p>
-            </div>
+        {activeTab === "dashboard" && (
+          <div id="dashboardTab">
+            {screen === "upload" && (
+              <>
+                <div className="upload-grid">
+                  <UploadPanel
+                    id="paper-input"
+                    label="Question Paper"
+                    icon="📄"
+                    hint="Paste the full question text or upload a JSON file exported from your authoring tool."
+                    value={paperText}
+                    onChange={setPaperText}
+                  />
+                  <UploadPanel
+                    id="cos-input"
+                    label="Course Outcomes"
+                    icon="🎯"
+                    hint="Paste the list of course outcomes for this module, or upload the JSON from your course file."
+                    value={cosText}
+                    onChange={setCosText}
+                  />
+                </div>
 
+                <div className="actions-bar">
+                  <button
+                    id="load-sample-btn"
+                    className="btn btn-outline"
+                    type="button"
+                    onClick={loadSample}
+                  >
+                    📥 Load Sample
+                  </button>
+                  <span className="spacer" />
+                  <span className="status-text" id="statusText">
+                    {paperText.trim() ? "Ready to audit" : "Paste JSON or load sample"}
+                  </span>
+                  <button
+                    id="audit-btn"
+                    className="btn btn-primary"
+                    type="button"
+                    onClick={startAudit}
+                  >
+                    🚀 Audit this paper
+                  </button>
+                </div>
+              </>
+            )}
+
+            {/* Analyzing Screen with Animated Loading */}
+            {screen === "analyzing" && (
+              <Analyzing onComplete={() => runAudit(paper, courseOutcomes)} />
+            )}
+
+            {/* Audit Report View */}
+            {screen === "report" && audit && (
+              <div className="report-section" id="reportSection">
+                <div className="report-header-bar">
+                  <div className="left">
+                    <h2 id="reportTitle">Audit Report</h2>
+                    <div className="meta" id="reportMeta">
+                      {paper.course || "CSE 3103"} · {totalMarks} marks total · {paper.questions.length} questions
+                    </div>
+                  </div>
+                  <div className="right">
+                    <button
+                      id="re-audit-btn"
+                      className="btn btn-secondary btn-sm"
+                      type="button"
+                      onClick={() => runAudit(paper, courseOutcomes)}
+                    >
+                      🔄 Re-run audit
+                    </button>
+                    <button
+                      id="new-audit-btn"
+                      className="btn btn-outline btn-sm"
+                      type="button"
+                      onClick={resetToUpload}
+                    >
+                      ✕ New audit
+                    </button>
+                  </div>
+                </div>
+
+                <HealthScore score={audit.healthScore} />
+
+                <CoverageGrid
+                  coverage={audit.coverage}
+                  coTexts={coTexts}
+                  suggestedQuestionIds={paper.questions
+                    .filter((q: any) => q.is_suggested || (suggestedFix && q.id === suggestedFix.question.id))
+                    .map((q) => q.id)}
+                />
+
+                <BloomChart bloom={audit.bloom} totalMarks={totalMarks} />
+
+                <Repeats repeats={audit.repeats} questionTexts={questionTexts} />
+
+                {suggestedFix && (
+                  <SuggestedQuestionCard
+                    question={suggestedFix.question}
+                    targetCo={suggestedFix.targetCo}
+                    replacedQuestionId={suggestedFix.replacedQuestion?.id}
+                    onRerun={handleRerunAudit}
+                    onAccept={handleAcceptFix}
+                    onDismiss={handleRejectSuggestion}
+                    isRerunning={isRerunning}
+                    isAccepted={fixAccepted}
+                  />
+                )}
+
+                <Issues
+                  issues={audit.issues}
+                  onGenerateFix={handleGenerateFix}
+                  generatingIndex={generatingIndex}
+                  activeFix={
+                    suggestedFix
+                      ? {
+                          question: suggestedFix.question,
+                          targetCo: suggestedFix.targetCo,
+                          replacedQuestionId: suggestedFix.replacedQuestion?.id,
+                          issueMessage: suggestedFix.issueMessage,
+                        }
+                      : null
+                  }
+                  fixError={fixError}
+                  onRerun={handleRerunAudit}
+                  onAccept={handleAcceptFix}
+                  onDismiss={handleRejectSuggestion}
+                  isRerunning={isRerunning}
+                  isAccepted={fixAccepted}
+                />
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ══════════════════════════════════════════════════════════════
+            TAB 2: PAPER LIBRARY
+        ══════════════════════════════════════════════════════════════ */}
+        {activeTab === "library" && (
+          <div id="libraryTab">
             <PaperLibrary
               papers={papers}
               activePaperId={currentPaperId}
@@ -618,171 +921,29 @@ export default function Home() {
               facultyName={activeFaculty.name}
               loading={loadingPapers}
             />
-
-            <div className="pl-upload-panels">
-              <UploadPanel
-                id="paper-input"
-                label="Question paper"
-                hint="Paste the full question text or upload a JSON file exported from your authoring tool."
-                value={paperText}
-                onChange={setPaperText}
-              />
-              <UploadPanel
-                id="cos-input"
-                label="Course outcomes"
-                hint="Paste the list of course outcomes for this module, or upload the JSON from your course file."
-                value={cosText}
-                onChange={setCosText}
-              />
-            </div>
-
-            <div className="pl-upload-actions">
-              <button
-                id="load-sample-btn"
-                className="pl-sample-btn"
-                type="button"
-                onClick={loadSample}
-              >
-                <svg className="pl-sample-icon" viewBox="0 0 16 16" fill="none">
-                  <path d="M8 1v9m0 0L5 7m3 3 3-3M2 13h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                Load sample
-              </button>
-              <button
-                id="audit-btn"
-                className="pl-audit-btn"
-                type="button"
-                onClick={startAudit}
-              >
-                Audit this paper
-              </button>
-            </div>
-
-            {/* Show past audits on the upload screen too */}
-            <div style={{ marginTop: "3rem" }}>
-              <AuditHistory
-                records={history}
-                onSelect={loadFromHistory}
-                onDelete={handleDeleteAudit}
-                facultyName={activeFaculty.name}
-              />
-            </div>
-          </>
+          </div>
         )}
 
         {/* ══════════════════════════════════════════════════════════════
-            ANALYZING SCREEN
+            TAB 3: AUDIT HISTORY
         ══════════════════════════════════════════════════════════════ */}
-        {screen === "analyzing" && (
-          <Analyzing />
-        )}
-
-        {/* ══════════════════════════════════════════════════════════════
-            REPORT SCREEN
-        ══════════════════════════════════════════════════════════════ */}
-        {screen === "report" && (
-          <>
-            <div className="pl-report-header">
-              <div>
-                <h1 className="pl-report-heading">Audit Report</h1>
-                <p className="pl-report-sub">
-                  {paper.course || "CSE 3103"} — Database Management Systems · Semester Final
-                </p>
-              </div>
-              <div style={{ display: "flex", gap: "0.75rem", alignItems: "center", flexWrap: "wrap" }}>
-                <button
-                  id="header-rerun-btn"
-                  type="button"
-                  className="pl-rerun-btn"
-                  onClick={handleRerunAudit}
-                  disabled={isRerunning}
-                >
-                  {isRerunning ? "Re-running audit…" : "Re-run audit"}
-                </button>
-                <button
-                  id="new-audit-btn"
-                  className="pl-new-audit-btn"
-                  onClick={() => {
-                    setPaperText("");
-                    setCosText("");
-                    setCurrentAudit(null);
-                    setSuggestedFix(null);
-                    setFixAccepted(false);
-                    setError(null);
-                    setScreen("upload");
-                  }}
-                >
-                  New audit
-                </button>
-              </div>
-            </div>
-
-            <HealthScore score={audit.healthScore} />
-            <div className="pl-divider" />
-
-            <CoverageGrid
-              coverage={audit.coverage}
-              coTexts={coTexts}
-              suggestedQuestionIds={paper.questions
-                .filter((q: any) => q.is_suggested || (suggestedFix && q.id === suggestedFix.question.id))
-                .map((q) => q.id)}
-            />
-            <div className="pl-divider" />
-
-            <BloomChart bloom={audit.bloom} totalMarks={totalMarks} />
-            <div className="pl-divider" />
-
-            <Repeats repeats={audit.repeats} questionTexts={questionTexts} />
-            <div className="pl-divider" />
-
-            {suggestedFix && (
-              <>
-                <SuggestedQuestionCard
-                  question={suggestedFix.question}
-                  targetCo={suggestedFix.targetCo}
-                  replacedQuestionId={suggestedFix.replacedQuestion?.id}
-                  onRerun={handleRerunAudit}
-                  onAccept={handleAcceptFix}
-                  onDismiss={handleRejectSuggestion}
-                  isRerunning={isRerunning}
-                  isAccepted={fixAccepted}
-                />
-                <div className="pl-divider" />
-              </>
-            )}
-
-            <Issues
-              issues={audit.issues}
-              onGenerateFix={handleGenerateFix}
-              generatingIndex={generatingIndex}
-              activeFix={
-                suggestedFix
-                  ? {
-                      question: suggestedFix.question,
-                      targetCo: suggestedFix.targetCo,
-                      replacedQuestionId: suggestedFix.replacedQuestion?.id,
-                      issueMessage: suggestedFix.issueMessage,
-                    }
-                  : null
-              }
-              fixError={fixError}
-              onRerun={handleRerunAudit}
-              onAccept={handleAcceptFix}
-              onDismiss={handleRejectSuggestion}
-              isRerunning={isRerunning}
-              isAccepted={fixAccepted}
-            />
-            <div className="pl-divider" />
-
+        {activeTab === "history" && (
+          <div id="historyTab">
             <AuditHistory
               records={history}
               onSelect={loadFromHistory}
               onDelete={handleDeleteAudit}
               facultyName={activeFaculty.name}
             />
-          </>
+          </div>
         )}
       </main>
-    </>
+
+      {/* Floating Toast Notification */}
+      <div className={`toast ${toastMessage ? "show" : ""}`} id="toast">
+        <span>✨</span>
+        <span>{toastMessage}</span>
+      </div>
+    </div>
   );
 }
