@@ -1,0 +1,46 @@
+{
+  "course": "CSE 3103 - Database Management Systems (AUST, Semester Final)",
+  "totalMarks": 100,
+  "questions": [
+    {
+      "id": "Q1",
+      "text": "Define a database management system. List four advantages of a DBMS over a traditional file-processing system.",
+      "marks": 8
+    },
+    {
+      "id": "Q2",
+      "text": "Explain the three-schema architecture of a DBMS. Describe the two levels of data independence it provides.",
+      "marks": 10
+    },
+    {
+      "id": "Q3",
+      "text": "Draw an ER diagram for a university course-registration system covering students, courses, sections and instructors. Mark all cardinality and participation constraints.",
+      "marks": 15
+    },
+    {
+      "id": "Q4",
+      "text": "Map the ER diagram of Question 3 into a set of relational schemas. Clearly identify the primary key and foreign keys of every relation.",
+      "marks": 12
+    },
+    {
+      "id": "Q5",
+      "text": "Consider Enrollment(student_id, course_id, semester, grade, instructor_name, instructor_dept) with FDs: student_id, course_id, semester -> grade; course_id, semester -> instructor_name; instructor_name -> instructor_dept. Normalise the relation up to 3NF, showing each intermediate step.",
+      "marks": 12
+    },
+    {
+      "id": "Q6",
+      "text": "Using the schema Student(id, name, dept, cgpa) and Enrollment(id, course_id, grade), write SQL statements to: (a) list students with CGPA above 3.50 ordered by CGPA, (b) count enrolments per department, (c) find students who have never enrolled in any course.",
+      "marks": 14
+    },
+    {
+      "id": "Q7",
+      "text": "State the ACID properties of a transaction. Briefly explain each property with a suitable example.",
+      "marks": 14
+    },
+    {
+      "id": "Q8",
+      "text": "Explain conflict serializability and view serializability. Give one example schedule that is view serializable but not conflict serializable.",
+      "marks": 15
+    }
+  ]
+}
