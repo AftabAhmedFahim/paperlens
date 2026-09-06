@@ -1787,3 +1787,39 @@ a {
     grid-template-columns: 1fr;
   }
 }
+
+/* ─── Modal Styles ──────────────────────────────────────────────────────── */
+.pl-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(11, 26, 51, 0.6);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.pl-modal-card {
+  width: 100%;
+  background: var(--cream);
+  border-radius: var(--radius);
+  border: 1.5px solid var(--gray-light);
+  box-shadow: 0 24px 72px rgba(11, 26, 51, 0.28);
+  animation: modalSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+@keyframes modalSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+

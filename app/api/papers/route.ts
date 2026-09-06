@@ -27,8 +27,8 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const faculty = await getCurrentFaculty();
-    const facultyId = faculty?.id || DEFAULT_FACULTY_ID;
     const body = await req.json();
+    const facultyId = body.facultyId || faculty?.id || DEFAULT_FACULTY_ID;
 
     const paper: Paper = body.paper || {
       course: body.course || "CSE 3103",

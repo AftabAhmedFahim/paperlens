@@ -22,6 +22,7 @@ import {
   AuditRecord,
 } from "@/components/AuditHistory";
 import { PaperLibrary, PaperMeta } from "@/components/PaperLibrary";
+import { NewPaperModal } from "@/components/NewPaperModal";
 
 type Screen = "upload" | "analyzing" | "report";
 type Tab = "dashboard" | "library" | "history";
@@ -51,6 +52,7 @@ export default function DashboardPage() {
   const [currentPaperId, setCurrentPaperId] = useState<string | null>("paper-cse3103-sample");
   const [papers, setPapers] = useState<PaperMeta[]>([]);
   const [loadingPapers, setLoadingPapers] = useState(false);
+  const [isNewPaperModalOpen, setIsNewPaperModalOpen] = useState(false);
 
   // ── Fix-it loop state ──
   const [generatingIndex, setGeneratingIndex] = useState<number | null>(null);
@@ -244,6 +246,22 @@ export default function DashboardPage() {
     } catch (err) {
       console.error("[handleDeletePaper] error:", err);
     }
+  }
+
+  // Handle newly created paper from modal
+  function handlePaperCreated(newPaperId: string, newPaper: Paper, newCos: CourseOutcome[]) {
+    setPaper(newPaper);
+    setCourseOutcomes(newCos);
+    setPaperText(JSON.stringify(newPaper, null, 2));
+    setCosText(JSON.stringify(newCos, null, 2));
+    setCurrentPaperId(newPaperId);
+    setSuggestedFix(null);
+    setFixAccepted(false);
+    setFixError(null);
+    setActiveTab("dashboard");
+    setScreen("upload");
+    fetchPapers(activeFaculty.id);
+    showToast(`Paper '${newPaper.course}' created and saved to library!`);
   }
 
   // Start analysis
@@ -767,6 +785,22 @@ export default function DashboardPage() {
           </div>
 
           <div className="header-actions">
+            <button
+              type="button"
+              id="add-paper-btn"
+              className="btn btn-primary btn-sm"
+              onClick={() => setIsNewPaperModalOpen(true)}
+              style={{
+                borderRadius: 8,
+                padding: "6px 14px",
+                fontSize: "0.82rem",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+              }}
+            >
+              <span>+</span> Add Paper
+            </button>
             <Link href="/" className="btn btn-outline btn-sm" style={{ textDecoration: "none" }}>
               Explore Features
             </Link>
@@ -857,6 +891,15 @@ export default function DashboardPage() {
                     onClick={loadSample}
                   >
                     📥 Load Sample
+                  </button>
+                  <button
+                    id="new-paper-action-btn"
+                    className="btn btn-outline"
+                    type="button"
+                    onClick={() => setIsNewPaperModalOpen(true)}
+                    style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+                  >
+                    <span>➕</span> Create New Paper
                   </button>
                   <span className="spacer" />
                   <span className="status-text" id="statusText">
@@ -974,6 +1017,7 @@ export default function DashboardPage() {
               onDelete={handleDeletePaper}
               facultyName={activeFaculty.name}
               loading={loadingPapers}
+              onOpenNewPaper={() => setIsNewPaperModalOpen(true)}
             />
           </div>
         )}
@@ -992,6 +1036,15 @@ export default function DashboardPage() {
           </div>
         )}
       </main>
+
+      {/* New Paper Creator Modal */}
+      <NewPaperModal
+        isOpen={isNewPaperModalOpen}
+        onClose={() => setIsNewPaperModalOpen(false)}
+        onCreated={handlePaperCreated}
+        facultyId={activeFaculty.id}
+        facultyName={activeFaculty.name}
+      />
 
       {/* Floating Toast Notification */}
       <div className={`toast ${toastMessage ? "show" : ""}`} id="toast">

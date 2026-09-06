@@ -21,6 +21,7 @@ interface PaperLibraryProps {
   onDelete: (paperId: string) => void;
   facultyName: string;
   loading?: boolean;
+  onOpenNewPaper?: () => void;
 }
 
 function scoreDot(score: number) {
@@ -36,6 +37,7 @@ export function PaperLibrary({
   onDelete,
   facultyName,
   loading = false,
+  onOpenNewPaper,
 }: PaperLibraryProps) {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
@@ -54,7 +56,7 @@ export function PaperLibrary({
 
   return (
     <section className="pl-section pl-library-section">
-      <div className="pl-library-header">
+      <div className="pl-library-header" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "1rem" }}>
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
             <h2 className="pl-section-title" style={{ margin: 0 }}>Paper Library</h2>
@@ -66,6 +68,17 @@ export function PaperLibrary({
             Question papers for {facultyName}. Click any paper to load and audit it.
           </p>
         </div>
+
+        {onOpenNewPaper && (
+          <button
+            type="button"
+            className="btn btn-primary btn-sm"
+            onClick={onOpenNewPaper}
+            style={{ borderRadius: 8, padding: "8px 16px" }}
+          >
+            + New Paper
+          </button>
+        )}
       </div>
 
       {papers.length === 0 ? (
