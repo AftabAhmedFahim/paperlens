@@ -9,8 +9,8 @@ import { Audit, Paper, Question } from "./types";
  *  ------------------------------------------------------------------ */
 const TOP_N = 5;
 const MIN_COSINE = 0.25; // anything below this is not worth a model call
-const FALLBACK_NEAR_DUPLICATE = 0.6;
-const FALLBACK_RELATED = 0.4;
+const FALLBACK_NEAR_DUPLICATE = 0.3;
+const FALLBACK_RELATED = 0.22;
 
 type BankEntry = { year: string; text: string };
 
