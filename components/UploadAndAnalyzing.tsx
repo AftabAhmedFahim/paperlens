@@ -8,9 +8,10 @@ interface UploadPanelProps {
   value: string;
   onChange: (v: string) => void;
   id: string;
+  icon?: string;
 }
 
-export function UploadPanel({ label, hint, value, onChange, id }: UploadPanelProps) {
+export function UploadPanel({ label, hint, value, onChange, id, icon }: UploadPanelProps) {
   const fileRef = useRef<HTMLInputElement>(null);
 
   function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -19,18 +20,23 @@ export function UploadPanel({ label, hint, value, onChange, id }: UploadPanelPro
     const reader = new FileReader();
     reader.onload = (ev) => onChange((ev.target?.result as string) ?? "");
     reader.readAsText(file);
+    e.target.value = "";
   }
 
   return (
-    <div className="pl-upload-panel">
-      <div className="pl-upload-header">
-        <label className="pl-upload-label" htmlFor={id}>{label}</label>
+    <div className="upload-panel">
+      <div className="panel-header">
+        <label htmlFor={id}>
+          {icon && <span style={{ marginRight: 6 }}>{icon}</span>}
+          {label}
+        </label>
         <button
-          className="pl-upload-file-btn"
+          className="file-btn"
           type="button"
           onClick={() => fileRef.current?.click()}
+          title="Upload JSON file"
         >
-          Load JSON file
+          Load JSON
         </button>
         <input
           ref={fileRef}
@@ -40,27 +46,26 @@ export function UploadPanel({ label, hint, value, onChange, id }: UploadPanelPro
           onChange={handleFile}
         />
       </div>
-      <p className="pl-upload-hint">{hint}</p>
+      <p className="hint">{hint}</p>
       <textarea
         id={id}
-        className="pl-upload-textarea"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder={`Paste ${label.toLowerCase()} here, or load a JSON file above…`}
+        placeholder={`Paste ${label.toLowerCase()} JSON here…`}
         spellCheck={false}
       />
     </div>
   );
 }
 
-// ─── Analyzing State ─────────────────────────────────────────────────────────
+// ─── Analyzing State with Motion & Animated Steps ────────────────────────────
 
 const STEPS = [
-  { id: "parse",   label: "Parsing questions and course outcomes",        durationMs: 400 },
-  { id: "map",     label: "Mapping questions to course outcomes",          durationMs: 450 },
-  { id: "bloom",   label: "Assessing cognitive levels (Bloom's Taxonomy)", durationMs: 450 },
-  { id: "repeat",  label: "Comparing against past-year papers",            durationMs: 450 },
-  { id: "score",   label: "Computing assessment health score",             durationMs: 450 },
+  { id: "parse",  label: "Parsing questions and course outcomes",        durationMs: 420 },
+  { id: "map",    label: "Mapping questions to course outcomes",          durationMs: 460 },
+  { id: "bloom",  label: "Assessing cognitive levels (Bloom's Taxonomy)", durationMs: 460 },
+  { id: "repeat", label: "Comparing against past-year papers",            durationMs: 460 },
+  { id: "score",  label: "Computing assessment health score",             durationMs: 460 },
 ];
 
 interface AnalyzingProps {
@@ -79,7 +84,9 @@ export function Analyzing({ onComplete }: AnalyzingProps) {
       if (cancelled) return;
       const step = STEPS[idx];
       if (!step) {
-        setTimeout(() => { if (!cancelled && onComplete) onComplete(); }, 200);
+        setTimeout(() => {
+          if (!cancelled && onComplete) onComplete();
+        }, 220);
         return;
       }
       setActiveStep(idx);
@@ -87,69 +94,53 @@ export function Analyzing({ onComplete }: AnalyzingProps) {
         if (cancelled) return;
         setDone((d) => new Set([...d, idx]));
         idx++;
-        setTimeout(advance, 80);
+        setTimeout(advance, 90);
       }, step.durationMs);
     }
 
     advance();
-    return () => { cancelled = true; };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
-    <div className="pl-analyzing">
-      <div className="pl-analyzing-inner">
-        <div className="pl-analyzing-spinner" aria-hidden="true">
-          <svg viewBox="0 0 50 50" width="48" height="48">
-            <circle
-              cx="25" cy="25" r="20"
-              fill="none"
-              stroke="#4f46e5"
-              strokeWidth="4"
-              strokeLinecap="round"
-              strokeDasharray="100 28"
+    <div className="analyzing-overlay">
+      <div className="spinner">
+        <svg viewBox="0 0 50 50">
+          <circle
+            cx="25"
+            cy="25"
+            r="20"
+            fill="none"
+            stroke="var(--gold)"
+            strokeWidth="4"
+            strokeLinecap="round"
+            strokeDasharray="100 28"
+          />
+        </svg>
+      </div>
+
+      <h3>Auditing your paper</h3>
+      <p>This usually takes a few seconds. Each step runs against your actual course outcomes.</p>
+
+      <div className="steps" id="analysisSteps">
+        {STEPS.map((step, i) => {
+          const isDone = done.has(i);
+          const isActive = activeStep === i && !isDone;
+          return (
+            <div
+              key={step.id}
+              className={`step ${isDone ? "done" : isActive ? "active" : ""}`}
             >
-              <animateTransform
-                attributeName="transform"
-                type="rotate"
-                from="0 25 25"
-                to="360 25 25"
-                dur="0.9s"
-                repeatCount="indefinite"
-              />
-            </circle>
-          </svg>
-        </div>
-
-        <h2 className="pl-analyzing-title">Auditing your paper</h2>
-        <p className="pl-analyzing-sub">
-          This usually takes a few seconds. Each step runs against your actual
-          course outcomes.
-        </p>
-
-        <ol className="pl-steps">
-          {STEPS.map((step, i) => {
-            const isDone = done.has(i);
-            const isActive = activeStep === i && !isDone;
-            return (
-              <li key={step.id} className={`pl-step ${isDone ? "pl-step-done" : isActive ? "pl-step-active" : "pl-step-pending"}`}>
-                <span className="pl-step-icon" aria-hidden="true">
-                  {isDone ? (
-                    <svg viewBox="0 0 16 16" width="16" height="16" fill="none">
-                      <circle cx="8" cy="8" r="7" fill="#4f46e5" />
-                      <path d="M5 8.5l2 2 4-4" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  ) : isActive ? (
-                    <span className="pl-step-pulse" />
-                  ) : (
-                    <span className="pl-step-circle" />
-                  )}
-                </span>
-                <span className="pl-step-label">{step.label}</span>
-              </li>
-            );
-          })}
-        </ol>
+              <span className="icon">
+                <span className="circle" />
+              </span>
+              <span className="label">{step.label}</span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
