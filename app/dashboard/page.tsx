@@ -149,10 +149,14 @@ export default function DashboardPage() {
     }
   }, [currentPaperId, fetchAuditsForPaper]);
 
-  // Check for URL query param to open Add Paper modal
+  // Check for URL query param to open Add Paper modal or switch tab
   useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get("tab");
+      if (tabParam === "library" || tabParam === "history") {
+        setActiveTab(tabParam as Tab);
+      }
       if (params.get("action") === "new-paper" || params.get("new") === "true") {
         setIsNewPaperModalOpen(true);
       }

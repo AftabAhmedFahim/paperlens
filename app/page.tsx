@@ -90,18 +90,9 @@ export default function LandingHomePage() {
 
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             {currentUser ? (
-              <>
-                <Link
-                  href="/dashboard?action=new-paper"
-                  className="btn btn-outline-light btn-sm"
-                  style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
-                >
-                  <span>＋</span> New Paper
-                </Link>
-                <Link href="/dashboard" className="btn btn-primary btn-sm">
-                  Dashboard ({currentUser.name.split(" ")[1] || "Faculty"}) →
-                </Link>
-              </>
+              <Link href="/dashboard" className="btn btn-primary btn-sm">
+                Dashboard ({currentUser.name.split(" ")[1] || "Faculty"}) →
+              </Link>
             ) : (
               <>
                 <Link href="/login" className="btn btn-outline-light btn-sm">

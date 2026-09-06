@@ -72,11 +72,21 @@ export function PaperLibrary({
         {onOpenNewPaper && (
           <button
             type="button"
-            className="btn btn-primary btn-sm"
+            id="library-new-paper-btn"
+            className="btn btn-primary"
             onClick={onOpenNewPaper}
-            style={{ borderRadius: 8, padding: "8px 16px" }}
+            style={{
+              borderRadius: 8,
+              padding: "9px 18px",
+              fontSize: "0.88rem",
+              fontWeight: 700,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              boxShadow: "0 2px 10px rgba(201, 168, 76, 0.28)",
+            }}
           >
-            + New Paper
+            <span style={{ fontSize: "1.05rem", lineHeight: 1 }}>+</span> New Paper
           </button>
         )}
       </div>
