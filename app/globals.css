@@ -530,6 +530,26 @@ body {
   padding: 0.15rem 0.45rem;
 }
 
+.pl-qtag-suggested {
+  background: #f5f3ff;
+  color: #6d28d9;
+  border: 1px solid #ddd6fe;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.pl-qtag-badge {
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: #7c3aed;
+  color: #fff;
+  padding: 0.05rem 0.3rem;
+  border-radius: 3px;
+}
+
 /* ─── Bloom Chart ─────────────────────────────────────────────────────────── */
 .pl-bloom-chart {
   background: #fff;
@@ -1016,6 +1036,235 @@ body {
   font-size: 0.75rem;
   color: #c4c9d4;
   white-space: nowrap;
+}
+
+.pl-history-delete-btn {
+  margin-left: 0.5rem;
+  background: transparent;
+  border: none;
+  color: #9ca3af;
+  font-size: 0.8125rem;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.pl-history-delete-btn:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+/* ─── Paper Library ───────────────────────────────────────────────────────── */
+.pl-library-section {
+  margin-bottom: 2.5rem;
+}
+
+.pl-library-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.pl-library-count-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #4f46e5;
+  background: #eef2ff;
+  border-radius: 999px;
+  padding: 0.15rem 0.6rem;
+}
+
+.pl-library-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.pl-library-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: #fff;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.pl-library-card:hover {
+  border-color: #c7d2fe;
+  background: #fafafe;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.06);
+}
+
+.pl-library-card-active {
+  border-color: #6366f1;
+  background: #f8fafc;
+}
+
+.pl-library-card-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.pl-library-top {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.25rem;
+}
+
+.pl-library-course-tag {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #4f46e5;
+  background: #eef2ff;
+  padding: 0.15rem 0.5rem;
+  border-radius: 5px;
+}
+
+.pl-library-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pl-library-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8125rem;
+  color: #6b7280;
+}
+
+.pl-library-card-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-shrink: 0;
+}
+
+.pl-library-score-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 0.35rem 0.65rem;
+}
+
+.pl-library-score-val {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #111827;
+}
+
+.pl-library-score-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #9ca3af;
+}
+
+.pl-library-unaudited-badge {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #9ca3af;
+  background: #f3f4f6;
+  border-radius: 6px;
+  padding: 0.25rem 0.6rem;
+}
+
+.pl-library-delete-btn {
+  background: transparent;
+  border: none;
+  color: #9ca3af;
+  padding: 0.4rem;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.pl-library-delete-btn:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.pl-library-confirm-box {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.pl-library-confirm-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #b91c1c;
+}
+
+.pl-library-btn-confirm-delete {
+  background: #dc2626;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 0.5rem;
+  cursor: pointer;
+}
+
+.pl-library-btn-cancel-delete {
+  background: #e5e7eb;
+  color: #374151;
+  border: none;
+  border-radius: 5px;
+  font-size: 0.75rem;
+  padding: 0.2rem 0.5rem;
+  cursor: pointer;
+}
+
+.pl-accept-btn {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #047857;
+  background: #d1fae5;
+  border: 1px solid #a7f3d0;
+  border-radius: 8px;
+  padding: 0.5rem 0.875rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.pl-accept-btn:hover:not(:disabled) {
+  background: #a7f3d0;
+}
+
+.pl-accept-btn-saved {
+  background: #ecfdf5;
+  color: #059669;
+  border-color: #6ee7b7;
+  cursor: default;
+}
+
+.pl-suggested-saved-badge {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  background: #d1fae5;
+  color: #065f46;
+  border-radius: 4px;
+  padding: 0.15rem 0.45rem;
 }
 
 /* ─── Error Banner ────────────────────────────────────────────────────────── */
