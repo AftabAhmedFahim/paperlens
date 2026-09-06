@@ -9,10 +9,32 @@ interface HealthScoreProps {
   score: number;
 }
 
-function scoreColor(score: number) {
-  if (score >= 75) return { ring: "#22c55e", text: "#16a34a", label: "Healthy", bg: "#f0fdf4" };
-  if (score >= 50) return { ring: "#f59e0b", text: "#b45309", label: "Needs Attention", bg: "#fffbeb" };
-  return { ring: "#ef4444", text: "#b91c1c", label: "At Risk", bg: "#fef2f2" };
+function scoreMeta(score: number) {
+  if (score >= 75) {
+    return {
+      color: "#198754",
+      bg: "#19875418",
+      border: "#19875440",
+      label: "Healthy",
+      desc: "This paper covers the course outcomes well and shows a sound distribution of cognitive levels.",
+    };
+  }
+  if (score >= 50) {
+    return {
+      color: "#c9a84c",
+      bg: "#c9a84c20",
+      border: "#c9a84c40",
+      label: "Needs Attention",
+      desc: "This paper has notable gaps. Address the high-severity issues before submission.",
+    };
+  }
+  return {
+    color: "#dc3545",
+    bg: "#dc354520",
+    border: "#dc354540",
+    label: "At Risk",
+    desc: "This paper has serious structural issues. Several outcomes are missing or severely under-weighted.",
+  };
 }
 
 export function HealthScore({ score }: HealthScoreProps) {
@@ -22,7 +44,7 @@ export function HealthScore({ score }: HealthScoreProps) {
     const start = displayScore;
     const end = score;
     if (start === end) return;
-    const duration = 1200;
+    const duration = 1000;
     const startTime = performance.now();
 
     let animationFrameId: number;
@@ -41,85 +63,71 @@ export function HealthScore({ score }: HealthScoreProps) {
     return () => cancelAnimationFrame(animationFrameId);
   }, [score]);
 
-  const { ring, text, label, bg } = scoreColor(displayScore);
+  const meta = scoreMeta(displayScore);
   const circumference = 2 * Math.PI * 54;
   const offset = circumference * (1 - displayScore / 100);
 
   return (
-    <section className="pl-section">
-      <h2 className="pl-section-title">Assessment Health Score</h2>
-      <p className="pl-section-desc">
-        A composite measure of outcome coverage, cognitive level spread, and
-        question integrity. Scores below 50 indicate serious structural issues,
-        50–75 indicate notable gaps, and scores above 75 represent a sound assessment.
-      </p>
-
-      <div className="pl-health-card" style={{ background: bg, borderColor: ring + "40" }}>
-        <div className="pl-health-gauge">
-          <svg viewBox="0 0 120 120" width="160" height="160">
-            <circle
-              cx="60" cy="60" r="54"
-              fill="none"
-              stroke="#e5e7eb"
-              strokeWidth="10"
-            />
-            <circle
-              cx="60" cy="60" r="54"
-              fill="none"
-              stroke={ring}
-              strokeWidth="10"
-              strokeLinecap="round"
-              strokeDasharray={circumference}
-              strokeDashoffset={offset}
-              transform="rotate(-90 60 60)"
-              style={{ transition: "stroke-dashoffset 0.1s linear" }}
-            />
-            <text
-              x="60" y="56"
-              textAnchor="middle"
-              fontSize="26"
-              fontWeight="700"
-              fill={text}
-              fontFamily="inherit"
-            >
-              {displayScore}
-            </text>
-            <text
-              x="60" y="74"
-              textAnchor="middle"
-              fontSize="10"
-              fill="#9ca3af"
-              fontFamily="inherit"
-            >
-              out of 100
-            </text>
-          </svg>
-        </div>
-
-        <div className="pl-health-meta">
-          <span className="pl-health-badge" style={{ color: text, background: ring + "20" }}>
-            {label}
-          </span>
-          <p className="pl-health-desc" style={{ color: text }}>
-            {displayScore >= 75
-              ? "This paper covers the course outcomes well and shows a sound distribution of cognitive levels."
-              : displayScore >= 50
-              ? "This paper has notable gaps. Address the high-severity issues before submission."
-              : "This paper has serious structural issues. Several outcomes are missing or severely under-weighted."}
-          </p>
-        </div>
+    <div className="health-card" id="healthCard">
+      <div className="gauge">
+        <svg id="healthGauge" viewBox="0 0 120 120">
+          <circle cx="60" cy="60" r="54" fill="none" stroke="#e5e7eb" strokeWidth="10" />
+          <circle
+            cx="60"
+            cy="60"
+            r="54"
+            fill="none"
+            stroke={meta.color}
+            strokeWidth="10"
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            strokeDashoffset={offset}
+            transform="rotate(-90 60 60)"
+            style={{ transition: "stroke-dashoffset 0.8s cubic-bezier(0.16, 1, 0.3, 1), stroke 0.3s" }}
+          />
+          <text
+            x="60"
+            y="56"
+            textAnchor="middle"
+            fontSize="26"
+            fontWeight="800"
+            fill={meta.color}
+            fontFamily="Inter, sans-serif"
+          >
+            {displayScore}
+          </text>
+          <text
+            x="60"
+            y="74"
+            textAnchor="middle"
+            fontSize="10"
+            fill="#9ca3af"
+            fontFamily="Inter, sans-serif"
+            fontWeight="500"
+          >
+            out of 100
+          </text>
+        </svg>
       </div>
-    </section>
+
+      <div className="info">
+        <div className="score-label">Assessment Health Score</div>
+        <span className="badge" style={{ color: meta.color, background: meta.bg, border: `1px solid ${meta.border}` }}>
+          {meta.label}
+        </span>
+        <p className="desc">{meta.desc}</p>
+      </div>
+    </div>
   );
 }
 
 // ─── Coverage ────────────────────────────────────────────────────────────────
 
-const statusMeta = {
-  ok:      { label: "Good coverage",     color: "#16a34a", bg: "#f0fdf4", border: "#bbf7d0" },
-  under:   { label: "Under-weighted",    color: "#b45309", bg: "#fffbeb", border: "#fde68a" },
-  over:    { label: "Over-weighted",     color: "#7c3aed", bg: "#f5f3ff", border: "#ddd6fe" },
-  missing: { label: "Not assessed",      color: "#b91c1c", bg: "#fef2f2", border: "#fecaca" },
+const coverageMeta = {
+  ok:      { label: "Good coverage",  color: "#198754", bg: "#19875415", border: "#19875435" },
+  under:   { label: "Under-weighted", color: "#c9a84c", bg: "#c9a84c18", border: "#c9a84c35" },
+  over:    { label: "Over-weighted",  color: "#7c3aed", bg: "#7c3aed18", border: "#7c3aed35" },
+  missing: { label: "Not assessed",   color: "#dc3545", bg: "#dc354515", border: "#dc354535" },
 };
 
 interface CoverageGridProps {
@@ -134,75 +142,75 @@ export function CoverageGrid({
   suggestedQuestionIds = [],
 }: CoverageGridProps) {
   return (
-    <section className="pl-section">
-      <h2 className="pl-section-title">Outcome Coverage</h2>
-      <p className="pl-section-desc">
-        Each card represents one course outcome. The percentage reflects that
-        outcome&apos;s share of total marks. Targets should typically fall between
-        10% and 40% per outcome (below 10% is under-assessed, above 40% is over-weighted).
-      </p>
+    <div style={{ marginBottom: "32px" }}>
+      <div style={{ marginBottom: "14px" }}>
+        <h3 style={{ fontSize: "1.1rem", fontWeight: 800, color: "var(--navy)", marginBottom: "4px" }}>
+          🎯 Outcome Coverage
+        </h3>
+        <p style={{ fontSize: "0.84rem", color: "var(--text-muted)" }}>
+          Each card represents one course outcome. The percentage reflects that outcome&apos;s share of total marks.
+        </p>
+      </div>
 
-      <div className="pl-coverage-grid">
+      <div className="coverage-grid" id="coverageGrid">
         {coverage.map((c) => {
-          const meta = statusMeta[c.status];
+          const meta = coverageMeta[c.status] || coverageMeta.ok;
+          const isMissing = c.status === "missing";
           return (
             <div
               key={c.co}
-              className="pl-coverage-card"
-              style={{ background: meta.bg, borderColor: meta.border }}
+              className="coverage-card"
+              style={{ borderColor: meta.border, background: meta.bg }}
             >
-              <div className="pl-coverage-header">
-                <span className="pl-coverage-id">{c.co}</span>
-                <span className="pl-coverage-badge" style={{ color: meta.color, background: meta.color + "18" }}>
+              <div className="header">
+                <span className="co-id">{c.co}</span>
+                <span
+                  className="co-badge"
+                  style={{ color: meta.color, background: meta.color + "20" }}
+                >
                   {meta.label}
                 </span>
               </div>
 
-              {coTexts[c.co] && (
-                <p className="pl-coverage-text">{coTexts[c.co]}</p>
-              )}
+              {coTexts[c.co] && <div className="co-text">{coTexts[c.co]}</div>}
 
-              <div className="pl-coverage-stats">
-                <div className="pl-coverage-stat">
-                  <span className="pl-stat-value" style={{ color: meta.color }}>
+              <div className="stats">
+                <div className="stat">
+                  <div className="num" style={{ color: meta.color }}>
                     {c.marks}
-                  </span>
-                  <span className="pl-stat-label">marks</span>
+                  </div>
+                  <div className="lbl">marks</div>
                 </div>
-                <div className="pl-coverage-stat">
-                  <span className="pl-stat-value" style={{ color: meta.color }}>
+                <div className="stat">
+                  <div className="num" style={{ color: meta.color }}>
                     {c.sharePct}%
-                  </span>
-                  <span className="pl-stat-label">share</span>
+                  </div>
+                  <div className="lbl">share</div>
                 </div>
-                <div className="pl-coverage-stat">
-                  <span className="pl-stat-value" style={{ color: meta.color }}>
+                <div className="stat">
+                  <div className="num" style={{ color: meta.color }}>
                     {c.questionIds.length}
-                  </span>
-                  <span className="pl-stat-label">
-                    {c.questionIds.length === 1 ? "question" : "questions"}
-                  </span>
+                  </div>
+                  <div className="lbl">questions</div>
                 </div>
               </div>
 
-              {c.status === "missing" && (
-                <div className="pl-missing-banner">
-                  No question in this paper assesses this outcome.
-                </div>
+              {isMissing && (
+                <div className="missing-banner">No question assesses this outcome.</div>
               )}
 
               {c.questionIds.length > 0 && (
-                <div className="pl-question-tags">
-                  {c.questionIds.map((q) => {
-                    const isSuggested = suggestedQuestionIds.includes(q);
+                <div className="q-tags">
+                  {c.questionIds.map((qid) => {
+                    const isSuggested = suggestedQuestionIds.includes(qid);
                     return (
                       <span
-                        key={q}
-                        className={`pl-qtag ${isSuggested ? "pl-qtag-suggested" : ""}`}
-                        title={isSuggested ? "AI-suggested replacement question" : undefined}
+                        key={qid}
+                        className={`tag ${isSuggested ? "suggested" : ""}`}
+                        title={isSuggested ? "AI-suggested question" : `Question ${qid}`}
                       >
-                        {q}
-                        {isSuggested && <span className="pl-qtag-badge">AI Fix</span>}
+                        {qid}
+                        {isSuggested && " ✨"}
                       </span>
                     );
                   })}
@@ -212,81 +220,67 @@ export function CoverageGrid({
           );
         })}
       </div>
-    </section>
+    </div>
   );
 }
 
-// ─── Bloom Distribution ──────────────────────────────────────────────────────
+// ─── Bloom Chart ─────────────────────────────────────────────────────────────
 
-const bloomMeta: Record<Bloom, { color: string; low: boolean }> = {
-  Remember:   { color: "#94a3b8", low: true },
-  Understand: { color: "#64748b", low: true },
-  Apply:      { color: "#4f46e5", low: false },
-  Analyze:    { color: "#7c3aed", low: false },
-  Evaluate:   { color: "#0891b2", low: false },
-  Create:     { color: "#059669", low: false },
-};
-
-const bloomOrder: Bloom[] = ["Remember", "Understand", "Apply", "Analyze", "Evaluate", "Create"];
+const BLOOM_ORDER: Bloom[] = ["Remember", "Understand", "Apply", "Analyze", "Evaluate", "Create"];
 
 interface BloomChartProps {
-  bloom: Record<Bloom, number>;
-  totalMarks?: number;
+  bloom: Audit["bloom"];
+  totalMarks: number;
 }
 
-export function BloomChart({ bloom, totalMarks = 60 }: BloomChartProps) {
-  const max = Math.max(...Object.values(bloom), 1);
+export function BloomChart({ bloom, totalMarks }: BloomChartProps) {
+  const bloomMax = Math.max(...Object.values(bloom), 1);
 
   return (
-    <section className="pl-section">
-      <h2 className="pl-section-title">Cognitive Level Distribution</h2>
-      <p className="pl-section-desc">
-        Bloom&apos;s Taxonomy levels are shown by total marks awarded at each level.
-        The two lower-order levels — Remember and Understand — are shown in grey.
-        A balanced assessment should not concentrate more than 50% of marks in
-        these two levels.
+    <div className="bloom-section">
+      <h3>🧠 Cognitive Level Distribution</h3>
+      <p className="sub">
+        Bloom&apos;s Taxonomy levels shown by total marks. Lower-order levels (Remember, Understand) are shown in neutral grey.
       </p>
 
-      <div className="pl-bloom-chart">
-        {bloomOrder.map((level) => {
-          const pct = bloom[level] ?? 0;
+      <div id="bloomChart">
+        {BLOOM_ORDER.map((level) => {
+          const pct = bloom[level] || 0;
           const marks = Math.round((pct / 100) * totalMarks);
-          const barWidth = Math.round((pct / max) * 100);
-          const meta = bloomMeta[level];
+          const barWidth = Math.round((pct / bloomMax) * 100);
+          const isLow = level === "Remember" || level === "Understand";
 
           return (
-            <div key={level} className="pl-bloom-row">
-              <div className="pl-bloom-label">
-                <span className={meta.low ? "pl-bloom-level-low" : "pl-bloom-level"}>
-                  {level}
-                </span>
-              </div>
-              <div className="pl-bloom-bar-track">
+            <div key={level} className="bloom-row">
+              <span className={`level ${isLow ? "low" : ""}`}>{level}</span>
+              <div className="bar-track">
                 <div
-                  className="pl-bloom-bar"
+                  className="bar"
                   style={{
                     width: `${barWidth}%`,
-                    background: meta.color,
-                    opacity: meta.low ? 0.55 : 1,
+                    background: isLow ? "#94a3b8" : "var(--gold)",
+                    opacity: isLow ? 0.6 : 1,
                   }}
                 />
               </div>
-              <div className="pl-bloom-numbers">
-                <span className="pl-bloom-marks">{marks}</span>
-                <span className="pl-bloom-pct">{Math.round(pct)}%</span>
+              <div className="nums">
+                <span className="marks">{marks} m</span>
+                <span className="pct">{Math.round(pct)}%</span>
               </div>
             </div>
           );
         })}
       </div>
 
-      <p className="pl-bloom-legend">
-        <span className="pl-legend-dot" style={{ background: "#94a3b8" }} />
-        Lower-order (Remember + Understand)
-        <span className="pl-legend-dot" style={{ background: "#4f46e5", marginLeft: "1.5rem" }} />
-        Higher-order (Apply through Create)
-      </p>
-    </section>
+      <div className="bloom-legend">
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+          <span className="dot" style={{ background: "#94a3b8" }} /> Lower-order (Remember + Understand)
+        </span>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 6, marginLeft: 16 }}>
+          <span className="dot" style={{ background: "var(--gold)" }} /> Higher-order (Apply through Create)
+        </span>
+      </div>
+    </div>
   );
 }
 
@@ -294,11 +288,11 @@ export function BloomChart({ bloom, totalMarks = 60 }: BloomChartProps) {
 
 const verdictMeta: Record<
   "near-duplicate" | "related" | "distinct",
-  { label: string; color: string; bg: string; border: string }
+  { label: string; color: string; bg: string }
 > = {
-  "near-duplicate": { label: "Flagged", color: "#b91c1c", bg: "#fef2f2", border: "#fecaca" },
-  related:          { label: "Related", color: "#b45309", bg: "#fffbeb", border: "#fde68a" },
-  distinct:         { label: "Clear",   color: "#16a34a", bg: "#f0fdf4", border: "#bbf7d0" },
+  "near-duplicate": { label: "Flagged", color: "#dc3545", bg: "#dc354518" },
+  related:          { label: "Related", color: "#c9a84c", bg: "#c9a84c18" },
+  distinct:         { label: "Clear",   color: "#198754", bg: "#19875418" },
 };
 
 interface RepeatCardProps {
@@ -310,33 +304,38 @@ function RepeatCard({ repeat, paperQuestion }: RepeatCardProps) {
   const meta = verdictMeta[repeat.verdict] ?? verdictMeta.related;
 
   return (
-    <div className="pl-repeat-card" style={{ borderColor: meta.border }}>
-      <div className="pl-repeat-header">
-        <span className="pl-repeat-id">{repeat.questionId}</span>
-        <span className="pl-repeat-badge" style={{ color: meta.color, background: meta.color + "18" }}>
+    <div className="repeat-card">
+      <div className="header">
+        <span className="qid">{repeat.questionId}</span>
+        <span
+          className="r-badge"
+          style={{ color: meta.color, background: meta.bg }}
+        >
           {meta.label}
         </span>
-        <span className="pl-repeat-sim" style={{ color: meta.color }}>
+        <span className="sim" style={{ color: meta.color }}>
           {Math.round(repeat.similarity * 100)}% match
         </span>
-        <span className="pl-repeat-year">{repeat.matchYear}</span>
+        <span className="year">{repeat.matchYear} paper</span>
       </div>
 
-      <div className="pl-repeat-grid">
-        <div className="pl-repeat-col">
-          <div className="pl-repeat-col-label">This paper</div>
-          <p className="pl-repeat-text">
+      <div className="grid">
+        <div className="col">
+          <div className="label">This paper</div>
+          <p className="text">
             {paperQuestion ?? "Question text not available."}
           </p>
         </div>
-        <div className="pl-repeat-divider" />
-        <div className="pl-repeat-col">
-          <div className="pl-repeat-col-label">{repeat.matchYear} paper</div>
-          <p className="pl-repeat-text">{repeat.matchText}</p>
+        <div className="divider" />
+        <div className="col">
+          <div className="label">{repeat.matchYear} past paper</div>
+          <p className="text">{repeat.matchText}</p>
         </div>
       </div>
 
-      <p className="pl-repeat-reason">{repeat.reason}</p>
+      <div className="reason">
+        <strong>Review recommendation:</strong> {repeat.reason}
+      </div>
     </div>
   );
 }
@@ -347,42 +346,119 @@ interface RepeatsProps {
 }
 
 export function Repeats({ repeats, questionTexts = {} }: RepeatsProps) {
-  if (repeats.length === 0) {
-    return (
-      <section className="pl-section">
-        <h2 className="pl-section-title">Repeated Questions</h2>
-        <p className="pl-empty">No matches found against the past-paper archive.</p>
-      </section>
-    );
-  }
-
   return (
-    <section className="pl-section">
-      <h2 className="pl-section-title">Repeated Questions</h2>
-      <p className="pl-section-desc">
-        Questions are compared against three years of past papers (2022–2024) from this
-        course. Questions with matching tasks are flagged as near-duplicates;
-        similar topics with differing tasks are marked as related.
+    <div className="repeats-section">
+      <h3>🔁 Repeated Questions</h3>
+      <p className="sub">
+        Questions compared against three years of past papers (2022–2024). Near-duplicates and related tasks are flagged.
       </p>
-      <div className="pl-repeat-list">
-        {repeats.map((r) => (
-          <RepeatCard
-            key={r.questionId}
-            repeat={r}
-            paperQuestion={questionTexts[r.questionId]}
-          />
-        ))}
+
+      {repeats.length === 0 ? (
+        <div className="no-repeats">
+          ✅ No matches found against the past-paper archive. All questions are distinct!
+        </div>
+      ) : (
+        <div id="repeatsList">
+          {repeats.map((r) => (
+            <RepeatCard
+              key={r.questionId}
+              repeat={r}
+              paperQuestion={questionTexts[r.questionId]}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Suggested Fix Card ──────────────────────────────────────────────────────
+
+interface SuggestedQuestionCardProps {
+  question: Question;
+  targetCo?: string;
+  replacedQuestionId?: string;
+  onRerun: () => void;
+  onAccept?: () => void;
+  onDismiss: () => void;
+  isRerunning?: boolean;
+  isAccepted?: boolean;
+}
+
+export function SuggestedQuestionCard({
+  question,
+  targetCo,
+  replacedQuestionId,
+  onRerun,
+  onAccept,
+  onDismiss,
+  isRerunning = false,
+  isAccepted = false,
+}: SuggestedQuestionCardProps) {
+  return (
+    <div id="suggested-fix-card" className="suggested-fix">
+      <div className="header">
+        <div className="tags">
+          <span className="tag badge">
+            {replacedQuestionId ? "✨ Suggested Replacement" : "✨ Suggested Question"}
+          </span>
+          <span className="tag">Question {question.id}</span>
+          <span className="tag">{question.marks} marks</span>
+          {targetCo && <span className="tag">{targetCo}</span>}
+          {replacedQuestionId && (
+            <span className="tag" style={{ background: "#fef3c7", color: "#92400e" }}>
+              Replaces {replacedQuestionId}
+            </span>
+          )}
+          {isAccepted && (
+            <span className="tag" style={{ background: "#198754", color: "#fff" }}>
+              ✓ Saved to Paper
+            </span>
+          )}
+        </div>
+
+        <div className="actions">
+          {onAccept && (
+            <button
+              type="button"
+              className={`btn btn-success btn-sm`}
+              onClick={onAccept}
+              disabled={isRerunning || isAccepted}
+            >
+              {isAccepted ? "✓ Accepted" : "✓ Accept fix"}
+            </button>
+          )}
+          <button
+            type="button"
+            className="btn btn-secondary btn-sm"
+            onClick={onRerun}
+            disabled={isRerunning}
+          >
+            {isRerunning ? "Auditing…" : "🔄 Re-run audit"}
+          </button>
+          <button
+            type="button"
+            className="btn btn-outline btn-sm"
+            onClick={onDismiss}
+            disabled={isRerunning}
+            title="Dismiss suggestion"
+          >
+            ✕ Reject
+          </button>
+        </div>
       </div>
-    </section>
+
+      <div className="question-text">{question.text}</div>
+    </div>
   );
 }
 
 // ─── Issues ──────────────────────────────────────────────────────────────────
 
 const severityMeta = {
-  high:   { label: "High",   color: "#b91c1c", bg: "#fef2f2", border: "#fca5a5", dot: "#ef4444" },
-  medium: { label: "Medium", color: "#92400e", bg: "#fffbeb", border: "#fcd34d", dot: "#f59e0b" },
-  low:    { label: "Low",    color: "#374151", bg: "#f9fafb", border: "#e5e7eb", dot: "#9ca3af" },
+  high:   { label: "High",   color: "#dc3545", bg: "#dc354512", dot: "#dc3545" },
+  medium: { label: "Medium", color: "#c9a84c", bg: "#c9a84c14", dot: "#c9a84c" },
+  low:    { label: "Low",    color: "#6b7a8f", bg: "#6b7a8f12", dot: "#6b7a8f" },
 };
 
 interface ActiveFixInfo {
@@ -423,13 +499,13 @@ export function Issues({
   });
 
   return (
-    <section className="pl-section">
-      <h2 className="pl-section-title">Issues</h2>
-      <p className="pl-section-desc">
-        Issues are sorted by severity. You can generate an AI fix for any issue below.
+    <div className="issues-section">
+      <h3>⚠️ Issues</h3>
+      <p className="sub">
+        Sorted by severity. You can generate an AI fix for any issue below. High-severity issues should be resolved before exam submission.
       </p>
 
-      <div className="pl-issues-list">
+      <div id="issuesList">
         {sorted.map((issue, i) => {
           const meta = severityMeta[issue.severity];
           const isGenerating = generatingIndex === i;
@@ -444,32 +520,31 @@ export function Issues({
             <div
               key={i}
               id={`issue-row-${i}`}
-              className="pl-issue-row"
+              className="issue-row"
               style={{
                 background: isCurrentFix ? "#f0fdf4" : meta.bg,
-                borderColor: isCurrentFix ? "#10b981" : meta.border,
-                transition: "all 0.2s ease",
+                borderColor: isCurrentFix ? "#10b981" : meta.dot + "35",
               }}
             >
               <span
-                className="pl-issue-dot"
+                className="dot"
                 style={{ background: isCurrentFix ? "#10b981" : meta.dot }}
               />
-              <div className="pl-issue-body">
-                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
+              <div className="body">
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap", marginBottom: 4 }}>
                   <span
-                    className="pl-issue-badge"
-                    style={{ color: meta.color, background: meta.color + "18" }}
+                    className="i-badge"
+                    style={{ color: meta.color, background: meta.color + "20" }}
                   >
                     {meta.label}
                   </span>
                   {isCurrentFix && activeFix && (
                     <span className="pl-fix-active-badge">
-                      ✓ Fix Ready (Question {activeFix.question.id})
+                      ✓ Fix Ready (Q{activeFix.question.id})
                     </span>
                   )}
                 </div>
-                <p className="pl-issue-msg">{issue.message}</p>
+                <div className="msg">{issue.message}</div>
 
                 {currentError && (
                   <div className="pl-inline-fix-error">
@@ -490,7 +565,9 @@ export function Issues({
                         <span className="pl-inline-fix-tag">{activeFix.targetCo}</span>
                       )}
                       {isAccepted && (
-                        <span className="pl-suggested-saved-badge">Saved to Paper</span>
+                        <span className="tag" style={{ background: "#198754", color: "#fff", fontSize: "0.72rem", padding: "2px 8px", borderRadius: 4 }}>
+                          ✓ Saved to Paper
+                        </span>
                       )}
                     </div>
                     <p className="pl-inline-fix-text">{activeFix.question.text}</p>
@@ -498,27 +575,27 @@ export function Issues({
                       {onAccept && (
                         <button
                           type="button"
-                          className={`pl-accept-btn ${isAccepted ? "pl-accept-btn-saved" : ""}`}
+                          className={`btn btn-success btn-sm`}
                           onClick={onAccept}
                           disabled={isRerunning || isAccepted}
                         >
-                          {isAccepted ? "✓ Accepted" : "Accept fix"}
+                          {isAccepted ? "✓ Accepted" : "✓ Accept fix"}
                         </button>
                       )}
                       {onRerun && (
                         <button
                           type="button"
-                          className="pl-rerun-btn"
+                          className="btn btn-secondary btn-sm"
                           onClick={onRerun}
                           disabled={isRerunning}
                         >
-                          {isRerunning ? "Auditing…" : "Re-run audit"}
+                          {isRerunning ? "Auditing…" : "🔄 Re-run audit"}
                         </button>
                       )}
                       {onDismiss && (
                         <button
                           type="button"
-                          className="pl-dismiss-btn"
+                          className="btn btn-outline btn-sm"
                           onClick={onDismiss}
                           disabled={isRerunning}
                         >
@@ -533,96 +610,18 @@ export function Issues({
               {onGenerateFix && (
                 <button
                   type="button"
-                  className={`pl-fix-btn ${isCurrentFix ? "pl-fix-btn-active" : ""}`}
+                  className={`fix-btn ${isCurrentFix ? "pl-fix-btn-active" : ""}`}
                   onClick={() => onGenerateFix(issue, i)}
                   disabled={generatingIndex !== null && generatingIndex !== undefined}
                   title={`Generate fix for this ${issue.severity}-severity issue`}
                 >
-                  {isGenerating ? "Generating fix…" : isCurrentFix ? "Regenerate fix" : "Generate fix"}
+                  {isGenerating ? "Generating…" : isCurrentFix ? "Regenerate fix" : "Generate fix"}
                 </button>
               )}
             </div>
           );
         })}
       </div>
-    </section>
-  );
-}
-
-// ─── Suggested Fix Card ──────────────────────────────────────────────────────
-
-interface SuggestedQuestionCardProps {
-  question: Question;
-  targetCo?: string;
-  replacedQuestionId?: string;
-  onRerun: () => void;
-  onAccept?: () => void;
-  onDismiss: () => void;
-  isRerunning?: boolean;
-  isAccepted?: boolean;
-}
-
-export function SuggestedQuestionCard({
-  question,
-  targetCo,
-  replacedQuestionId,
-  onRerun,
-  onAccept,
-  onDismiss,
-  isRerunning = false,
-  isAccepted = false,
-}: SuggestedQuestionCardProps) {
-  return (
-    <div id="suggested-fix-card" className="pl-suggested-card">
-      <div className="pl-suggested-header">
-        <div className="pl-suggested-tags">
-          <span className="pl-suggested-badge">
-            {replacedQuestionId ? "Suggested Replacement" : "Suggested Question"}
-          </span>
-          <span className="pl-suggested-tag">Question {question.id}</span>
-          <span className="pl-suggested-tag">{question.marks} marks</span>
-          {targetCo && <span className="pl-suggested-tag">{targetCo}</span>}
-          {replacedQuestionId && (
-            <span className="pl-suggested-tag" style={{ background: "#fef3c7", color: "#92400e" }}>
-              Replaces {replacedQuestionId}
-            </span>
-          )}
-          {isAccepted && (
-            <span className="pl-suggested-saved-badge">Saved to Paper</span>
-          )}
-        </div>
-        <div className="pl-suggested-actions">
-          {onAccept && (
-            <button
-              type="button"
-              className={`pl-accept-btn ${isAccepted ? "pl-accept-btn-saved" : ""}`}
-              onClick={onAccept}
-              disabled={isRerunning || isAccepted}
-            >
-              {isAccepted ? "✓ Accepted" : "Accept fix"}
-            </button>
-          )}
-          <button
-            type="button"
-            className="pl-rerun-btn"
-            onClick={onRerun}
-            disabled={isRerunning}
-          >
-            {isRerunning ? "Auditing…" : "Re-run audit"}
-          </button>
-          <button
-            type="button"
-            className="pl-dismiss-btn"
-            onClick={onDismiss}
-            disabled={isRerunning}
-            title="Reject and remove this suggestion"
-          >
-            Reject
-          </button>
-        </div>
-      </div>
-      <p className="pl-suggested-text">{question.text}</p>
     </div>
   );
 }
-
