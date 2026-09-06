@@ -84,11 +84,54 @@ export function PaperLibrary({
       {papers.length === 0 ? (
         <div className="pl-history-empty" style={{ marginTop: "1rem" }}>
           <p className="pl-history-empty-text">
-            No saved question papers found for {facultyName}. Click &ldquo;Load sample&rdquo; or upload a draft paper below.
+            No saved question papers found for {facultyName}. Click &ldquo;Load sample&rdquo; or create a new paper to get started.
           </p>
+          {onOpenNewPaper && (
+            <div style={{ marginTop: "1.2rem" }}>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={onOpenNewPaper}
+                style={{ padding: "8px 18px", borderRadius: 8 }}
+              >
+                ＋ Add New Paper
+              </button>
+            </div>
+          )}
         </div>
       ) : (
         <div className="pl-library-list">
+          {onOpenNewPaper && (
+            <div
+              className="pl-library-card"
+              onClick={onOpenNewPaper}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") onOpenNewPaper();
+              }}
+              style={{
+                border: "2px dashed var(--gold)",
+                background: "rgba(201, 168, 76, 0.05)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                minHeight: 110,
+                cursor: "pointer",
+                transition: "all 0.2s ease",
+              }}
+            >
+              <div style={{ textAlign: "center", padding: "1rem" }}>
+                <span style={{ fontSize: "1.6rem", display: "block", color: "var(--gold-dark)", marginBottom: 4 }}>
+                  ＋
+                </span>
+                <strong style={{ color: "var(--navy)", fontSize: "0.95rem" }}>Add New Paper</strong>
+                <p style={{ margin: "4px 0 0 0", fontSize: "0.78rem", color: "var(--navy-muted)" }}>
+                  Create and audit a new examination draft
+                </p>
+              </div>
+            </div>
+          )}
           {papers.map((p) => {
             const isSelected = activePaperId === p.id;
             const isConfirming = confirmDeleteId === p.id;

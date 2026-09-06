@@ -90,9 +90,18 @@ export default function LandingHomePage() {
 
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             {currentUser ? (
-              <Link href="/dashboard" className="btn btn-primary btn-sm">
-                Dashboard ({currentUser.name.split(" ")[1] || "Faculty"}) →
-              </Link>
+              <>
+                <Link
+                  href="/dashboard?action=new-paper"
+                  className="btn btn-outline-light btn-sm"
+                  style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
+                >
+                  <span>＋</span> New Paper
+                </Link>
+                <Link href="/dashboard" className="btn btn-primary btn-sm">
+                  Dashboard ({currentUser.name.split(" ")[1] || "Faculty"}) →
+                </Link>
+              </>
             ) : (
               <>
                 <Link href="/login" className="btn btn-outline-light btn-sm">
@@ -176,6 +185,13 @@ export default function LandingHomePage() {
             <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
               <Link href="/dashboard" className="btn btn-primary">
                 🚀 Try PaperLens Now
+              </Link>
+              <Link
+                href="/dashboard?action=new-paper"
+                className="btn btn-outline-light"
+                style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+              >
+                <span>➕</span> Add New Paper
               </Link>
               <a href="#features" className="btn btn-outline-light">
                 Explore Features ↓
@@ -1015,6 +1031,13 @@ export default function LandingHomePage() {
           <div style={{ display: "flex", justifyContent: "center", gap: 16, flexWrap: "wrap" }}>
             <Link href="/dashboard" className="btn btn-primary" style={{ padding: "14px 36px", fontSize: "1rem" }}>
               Launch PaperLens Dashboard
+            </Link>
+            <Link
+              href="/dashboard?action=new-paper"
+              className="btn btn-outline-light"
+              style={{ padding: "14px 28px", fontSize: "1rem", display: "inline-flex", alignItems: "center", gap: 6 }}
+            >
+              <span>＋</span> Create Exam Paper
             </Link>
             <Link href="/login" className="btn btn-outline-light" style={{ padding: "14px 28px", fontSize: "1rem" }}>
               Faculty Sign In

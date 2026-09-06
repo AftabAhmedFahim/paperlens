@@ -9,9 +9,20 @@ interface UploadPanelProps {
   onChange: (v: string) => void;
   id: string;
   icon?: string;
+  onNewPaper?: () => void;
+  newPaperLabel?: string;
 }
 
-export function UploadPanel({ label, hint, value, onChange, id, icon }: UploadPanelProps) {
+export function UploadPanel({
+  label,
+  hint,
+  value,
+  onChange,
+  id,
+  icon,
+  onNewPaper,
+  newPaperLabel,
+}: UploadPanelProps) {
   const fileRef = useRef<HTMLInputElement>(null);
 
   function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -30,14 +41,32 @@ export function UploadPanel({ label, hint, value, onChange, id, icon }: UploadPa
           {icon && <span style={{ marginRight: 6 }}>{icon}</span>}
           {label}
         </label>
-        <button
-          className="file-btn"
-          type="button"
-          onClick={() => fileRef.current?.click()}
-          title="Upload JSON file"
-        >
-          Load JSON
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          {onNewPaper && (
+            <button
+              className="file-btn"
+              type="button"
+              onClick={onNewPaper}
+              title={newPaperLabel || "Create New Paper"}
+              style={{
+                background: "var(--gold)",
+                color: "var(--navy)",
+                fontWeight: 700,
+                borderColor: "var(--gold-dark)",
+              }}
+            >
+              ＋ {newPaperLabel || "Add Paper"}
+            </button>
+          )}
+          <button
+            className="file-btn"
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            title="Upload JSON file"
+          >
+            Load JSON
+          </button>
+        </div>
         <input
           ref={fileRef}
           type="file"

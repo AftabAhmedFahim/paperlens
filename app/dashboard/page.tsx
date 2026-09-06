@@ -149,6 +149,16 @@ export default function DashboardPage() {
     }
   }, [currentPaperId, fetchAuditsForPaper]);
 
+  // Check for URL query param to open Add Paper modal
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("action") === "new-paper" || params.get("new") === "true") {
+        setIsNewPaperModalOpen(true);
+      }
+    }
+  }, []);
+
   // Keyboard shortcut: Ctrl+Enter to audit
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -643,6 +653,30 @@ export default function DashboardPage() {
 
         <div className="nav-label">Workspace</div>
 
+        <div style={{ padding: "0 10px 10px 10px" }}>
+          <button
+            type="button"
+            id="sidebar-new-paper-btn"
+            className="btn btn-primary"
+            style={{
+              width: "100%",
+              justifyContent: "center",
+              gap: 8,
+              borderRadius: "8px",
+              padding: "9px 12px",
+              fontSize: "0.85rem",
+              fontWeight: 700,
+              boxShadow: "0 2px 8px rgba(201, 168, 76, 0.25)",
+            }}
+            onClick={() => {
+              setIsNewPaperModalOpen(true);
+              setSidebarOpen(false);
+            }}
+          >
+            <span style={{ fontSize: "1.05rem", lineHeight: 1 }}>＋</span> Add New Paper
+          </button>
+        </div>
+
         <button
           type="button"
           className={`nav-item ${activeTab === "dashboard" ? "active" : ""}`}
@@ -872,6 +906,8 @@ export default function DashboardPage() {
                     hint="Paste the full question text or upload a JSON file exported from your authoring tool."
                     value={paperText}
                     onChange={setPaperText}
+                    onNewPaper={() => setIsNewPaperModalOpen(true)}
+                    newPaperLabel="Build Paper"
                   />
                   <UploadPanel
                     id="cos-input"
@@ -940,6 +976,15 @@ export default function DashboardPage() {
                       onClick={() => runAudit(paper, courseOutcomes)}
                     >
                       🔄 Re-run audit
+                    </button>
+                    <button
+                      id="add-paper-report-btn"
+                      className="btn btn-primary btn-sm"
+                      type="button"
+                      onClick={() => setIsNewPaperModalOpen(true)}
+                      style={{ display: "inline-flex", alignItems: "center", gap: 5 }}
+                    >
+                      <span>＋</span> Add Paper
                     </button>
                     <button
                       id="new-audit-btn"
