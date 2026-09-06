@@ -1,41 +1,46 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 const DEMO_ACCOUNTS = [
   {
     name: "Dr. Mahmudul Hasan",
-    dept: "CSE · AUST",
+    dept: "CSE · DBMS",
     email: "hasan@aust.edu",
     password: "hasan123",
-    note: "DBMS & Software Engineering",
   },
   {
     name: "Dr. Nusrat Jahan",
-    dept: "CSE · AUST",
+    dept: "CSE · OS & DS",
     email: "jahan@aust.edu",
     password: "nusrat123",
-    note: "Data Structures & OS",
   },
   {
     name: "Dr. Tanvir Ahmed",
-    dept: "CSE · AUST",
+    dept: "CSE · Programming",
     email: "ahmed@aust.edu",
     password: "tanvir123",
-    note: "Structured Programming & DBMS",
   },
 ];
 
 export default function LoginPage() {
-  const router = useRouter();
+  const [isSignup, setIsSignup] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
+    if (isSignup) {
+      // Demo signup notice
+      setError("Registration is restricted during the evaluation period. Please use a seeded demo account below.");
+      return;
+    }
+
     if (!email.trim() || !password.trim()) {
       setError("Please enter both email and password.");
       return;
@@ -74,91 +79,221 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="pl-login-page">
-      <div className="pl-login-card">
-        <div className="pl-login-brand">
-          <span className="pl-nav-logo-mark">PL</span>
-          PaperLens
-          <span className="pl-nav-tag" style={{ marginLeft: "auto" }}>
-            Faculty Portal
-          </span>
+    <div className="login-page-wrapper">
+      <div className="login-card-container">
+        <Link
+          href="/landing"
+          style={{
+            position: "absolute",
+            top: 20,
+            left: 24,
+            fontSize: "0.8rem",
+            color: "var(--text-muted)",
+            fontWeight: 600,
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 4,
+          }}
+        >
+          ← Back to Tour
+        </Link>
+
+        <div style={{ textAlign: "center", marginBottom: 28, marginTop: 14 }}>
+          <div
+            style={{
+              width: 44,
+              height: 44,
+              background: "var(--navy)",
+              borderRadius: 12,
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "var(--gold)",
+              fontWeight: 900,
+              fontSize: 18,
+              boxShadow: "0 4px 16px rgba(11, 26, 51, 0.2)",
+              marginBottom: 12,
+            }}
+          >
+            PL
+          </div>
+          <h1 style={{ fontSize: "1.65rem", fontWeight: 800, color: "var(--navy)", margin: 0 }}>
+            {isSignup ? "Create Faculty Account" : "Welcome back"}
+          </h1>
+          <p style={{ color: "var(--text-muted)", fontSize: "0.88rem", marginTop: 4 }}>
+            {isSignup
+              ? "Join PaperLens to audit exams against course outcomes"
+              : "Sign in to your PaperLens faculty account"}
+          </p>
         </div>
 
-        <h1 className="pl-login-title">Faculty Sign In</h1>
-        <p className="pl-login-sub">
-          Sign in with your university credentials to audit question papers against
-          course outcomes.
-        </p>
-
         {error && (
-          <div className="pl-login-error" role="alert">
-            <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" style={{ flexShrink: 0 }}>
-              <path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 3.5a.75.75 0 01.75.75v4a.75.75 0 01-1.5 0v-4A.75.75 0 018 4.5zm0 8a1 1 0 110-2 1 1 0 010 2z" />
-            </svg>
+          <div
+            style={{
+              background: "#fef2f2",
+              border: "1px solid #fecaca",
+              color: "#b91c1c",
+              padding: "10px 14px",
+              borderRadius: 8,
+              fontSize: "0.84rem",
+              marginBottom: 20,
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+            }}
+            role="alert"
+          >
+            <span>⚠️</span>
             <span>{error}</span>
           </div>
         )}
 
-        <form className="pl-login-form" onSubmit={handleSubmit}>
-          <div className="pl-login-field">
-            <label className="pl-login-label" htmlFor="email-input">
-              University Email
+        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          {isSignup && (
+            <div>
+              <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 600, color: "var(--text-dark)", marginBottom: 4 }}>
+                Full Name
+              </label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Dr. Jane Doe"
+                style={{
+                  width: "100%",
+                  padding: "10px 14px",
+                  borderRadius: 10,
+                  border: "1.5px solid var(--gray-light)",
+                  fontSize: "0.92rem",
+                  outline: "none",
+                  background: "var(--cream)",
+                }}
+              />
+            </div>
+          )}
+
+          <div>
+            <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 600, color: "var(--text-dark)", marginBottom: 4 }}>
+              Email address
             </label>
             <input
-              id="email-input"
-              className="pl-login-input"
               type="email"
-              placeholder="e.g. hasan@aust.edu"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              autoComplete="username"
+              placeholder="hasan@aust.edu"
               required
+              style={{
+                width: "100%",
+                padding: "10px 14px",
+                borderRadius: 10,
+                border: "1.5px solid var(--gray-light)",
+                fontSize: "0.92rem",
+                outline: "none",
+                background: "var(--cream)",
+              }}
             />
           </div>
 
-          <div className="pl-login-field">
-            <label className="pl-login-label" htmlFor="password-input">
+          <div>
+            <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 600, color: "var(--text-dark)", marginBottom: 4 }}>
               Password
             </label>
             <input
-              id="password-input"
-              className="pl-login-input"
               type="password"
-              placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              autoComplete="current-password"
+              placeholder="••••••••"
               required
+              style={{
+                width: "100%",
+                padding: "10px 14px",
+                borderRadius: 10,
+                border: "1.5px solid var(--gray-light)",
+                fontSize: "0.92rem",
+                outline: "none",
+                background: "var(--cream)",
+              }}
             />
           </div>
 
           <button
             type="submit"
-            className="pl-login-submit"
+            className="btn btn-primary"
+            style={{ width: "100%", marginTop: 8, padding: "12px" }}
             disabled={loading}
           >
-            {loading ? "Signing in…" : "Sign In"}
+            {loading ? "Signing in…" : isSignup ? "Create Account" : "Sign In"}
           </button>
         </form>
 
-        <div className="pl-demo-accounts">
-          <div className="pl-demo-accounts-title">Demo Accounts (Click to auto-fill)</div>
-          <div className="pl-demo-accounts-list">
+        <div style={{ textAlign: "center", fontSize: "0.85rem", color: "var(--text-muted)", marginTop: 16 }}>
+          {isSignup ? "Already have an account? " : "Don't have an account? "}
+          <button
+            type="button"
+            onClick={() => {
+              setIsSignup(!isSignup);
+              setError(null);
+            }}
+            style={{
+              background: "none",
+              border: "none",
+              color: "#856404",
+              fontWeight: 700,
+              cursor: "pointer",
+              textDecoration: "underline",
+            }}
+          >
+            {isSignup ? "Sign in" : "Sign up"}
+          </button>
+        </div>
+
+        {/* Demo Accounts Panel */}
+        <div
+          style={{
+            marginTop: 24,
+            paddingTop: 20,
+            borderTop: "1.5px solid var(--gray-light)",
+          }}
+        >
+          <div style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: "var(--text-muted)", marginBottom: 10, textAlign: "center" }}>
+            1-Click Demo Accounts (Judges &amp; Evaluators)
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             {DEMO_ACCOUNTS.map((acc) => (
               <button
                 key={acc.email}
                 type="button"
-                className="pl-demo-account-btn"
                 onClick={() => fillDemoAccount(acc.email, acc.password)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  padding: "8px 12px",
+                  borderRadius: 8,
+                  border: "1px solid var(--gray-light)",
+                  background: "var(--cream)",
+                  cursor: "pointer",
+                  fontSize: "0.8rem",
+                  transition: "all 0.15s ease",
+                  textAlign: "left",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = "var(--gold)";
+                  e.currentTarget.style.background = "var(--gold-glow)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = "var(--gray-light)";
+                  e.currentTarget.style.background = "var(--cream)";
+                }}
               >
-                <div className="pl-demo-account-name">{acc.name}</div>
-                <div className="pl-demo-account-meta">
-                  <span>{acc.email}</span>
-                  <span>·</span>
-                  <span className="pl-demo-code-tag">{acc.password}</span>
-                  <span>·</span>
-                  <span>{acc.note}</span>
+                <div>
+                  <strong style={{ color: "var(--navy)" }}>{acc.name}</strong>
+                  <span style={{ color: "var(--text-muted)", marginLeft: 6 }}>({acc.dept})</span>
                 </div>
+                <span style={{ fontSize: "0.72rem", color: "#856404", fontWeight: 700 }}>
+                  Autofill →
+                </span>
               </button>
             ))}
           </div>
