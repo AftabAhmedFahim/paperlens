@@ -10,6 +10,8 @@ const UNDER_CO_PENALTY = 5;
 const SKEW_THRESHOLD = 50; // % of marks at Remember+Understand that is tolerated
 const SKEW_MAX_PENALTY = 20;
 const SKEW_SCALE = 0.4; // 0.4 => the full 20 points at 100% lower-order marks
+const NEAR_DUP_PENALTY = 6;
+const NEAR_DUP_MAX_PENALTY = 24;
 
 const UNDER_SHARE = 10; // sharePct below this is under-covered
 const OVER_SHARE = 40; // sharePct above this is over-covered
@@ -61,18 +63,22 @@ export function buildAudit(
   const lowerShare = LOWER.reduce((s, l) => s + bloom[l], 0);
   const missing = coverage.filter((c) => c.status === "missing");
   const under = coverage.filter((c) => c.status === "under");
+  const nearDupes = repeats.filter((r) => r.verdict === "near-duplicate").length;
 
   const skewPenalty = Math.min(
     SKEW_MAX_PENALTY,
     Math.max(0, lowerShare - SKEW_THRESHOLD) * SKEW_SCALE
   );
 
+  const dupPenalty = Math.min(NEAR_DUP_MAX_PENALTY, nearDupes * NEAR_DUP_PENALTY);
+
   const healthScore = clamp(
     Math.round(
       100 -
         missing.length * MISSING_CO_PENALTY -
         under.length * UNDER_CO_PENALTY -
-        skewPenalty
+        skewPenalty -
+        dupPenalty
     )
   );
 
