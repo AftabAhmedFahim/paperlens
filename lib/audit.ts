@@ -96,8 +96,11 @@ export function buildAudit(
     });
   }
 
+  // repeats can hold several past matches for one question; issue it once.
+  const flaggedHigh = new Set<string>();
   for (const r of repeats) {
-    if (r.verdict === "near-duplicate") {
+    if (r.verdict === "near-duplicate" && !flaggedHigh.has(r.questionId)) {
+      flaggedHigh.add(r.questionId);
       issues.push({
         severity: "high",
         message: `${r.questionId} is a near-duplicate of a ${r.matchYear} question (${Math.round(
@@ -134,8 +137,14 @@ export function buildAudit(
     }
   }
 
+  const flaggedLow = new Set<string>();
   for (const r of repeats) {
-    if (r.verdict === "related") {
+    if (
+      r.verdict === "related" &&
+      !flaggedHigh.has(r.questionId) &&
+      !flaggedLow.has(r.questionId)
+    ) {
+      flaggedLow.add(r.questionId);
       issues.push({
         severity: "low",
         message: `${r.questionId} resembles a ${r.matchYear} question (${Math.round(
