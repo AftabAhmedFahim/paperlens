@@ -387,11 +387,11 @@ const severityMeta = {
 
 interface IssuesProps {
   issues: Audit["issues"];
-  onGenerateFix?: (targetCo: string) => void;
-  generatingCo?: string | null;
+  onGenerateFix?: (issue: Audit["issues"][0], index: number) => void;
+  generatingIndex?: number | null;
 }
 
-export function Issues({ issues, onGenerateFix, generatingCo }: IssuesProps) {
+export function Issues({ issues, onGenerateFix, generatingIndex }: IssuesProps) {
   const sorted = [...issues].sort((a, b) => {
     const order = { high: 0, medium: 1, low: 2 };
     return order[a.severity] - order[b.severity];
@@ -401,14 +401,13 @@ export function Issues({ issues, onGenerateFix, generatingCo }: IssuesProps) {
     <section className="pl-section">
       <h2 className="pl-section-title">Issues</h2>
       <p className="pl-section-desc">
-        Issues are sorted by severity. High-severity items should be resolved
-        before the paper is submitted for review.
+        Issues are sorted by severity. You can generate an AI fix for any issue below.
       </p>
 
       <div className="pl-issues-list">
         {sorted.map((issue, i) => {
           const meta = severityMeta[issue.severity];
-          const isGenerating = generatingCo === issue.targetCo;
+          const isGenerating = generatingIndex === i;
           return (
             <div
               key={i}
@@ -422,11 +421,13 @@ export function Issues({ issues, onGenerateFix, generatingCo }: IssuesProps) {
                 </span>
                 <p className="pl-issue-msg">{issue.message}</p>
               </div>
-              {issue.severity === "high" && issue.targetCo && (
+              {onGenerateFix && (
                 <button
+                  type="button"
                   className="pl-fix-btn"
-                  onClick={() => onGenerateFix?.(issue.targetCo!)}
-                  disabled={isGenerating}
+                  onClick={() => onGenerateFix(issue, i)}
+                  disabled={generatingIndex !== null && generatingIndex !== undefined}
+                  title={`Generate fix for this ${issue.severity}-severity issue`}
                 >
                   {isGenerating ? "Generating fix…" : "Generate fix"}
                 </button>
@@ -444,6 +445,7 @@ export function Issues({ issues, onGenerateFix, generatingCo }: IssuesProps) {
 interface SuggestedQuestionCardProps {
   question: Question;
   targetCo?: string;
+  replacedQuestionId?: string;
   onRerun: () => void;
   onAccept?: () => void;
   onDismiss: () => void;
@@ -454,6 +456,7 @@ interface SuggestedQuestionCardProps {
 export function SuggestedQuestionCard({
   question,
   targetCo,
+  replacedQuestionId,
   onRerun,
   onAccept,
   onDismiss,
@@ -464,10 +467,17 @@ export function SuggestedQuestionCard({
     <div className="pl-suggested-card">
       <div className="pl-suggested-header">
         <div className="pl-suggested-tags">
-          <span className="pl-suggested-badge">Suggested Question</span>
+          <span className="pl-suggested-badge">
+            {replacedQuestionId ? "Suggested Replacement" : "Suggested Question"}
+          </span>
           <span className="pl-suggested-tag">Question {question.id}</span>
           <span className="pl-suggested-tag">{question.marks} marks</span>
           {targetCo && <span className="pl-suggested-tag">{targetCo}</span>}
+          {replacedQuestionId && (
+            <span className="pl-suggested-tag" style={{ background: "#fef3c7", color: "#92400e" }}>
+              Replaces {replacedQuestionId}
+            </span>
+          )}
           {isAccepted && (
             <span className="pl-suggested-saved-badge">Saved to Paper</span>
           )}
