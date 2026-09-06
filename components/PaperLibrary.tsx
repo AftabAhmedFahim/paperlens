@@ -135,7 +135,7 @@ export function PaperLibrary({
                 <span style={{ fontSize: "1.6rem", display: "block", color: "var(--gold-dark)", marginBottom: 4 }}>
                   ＋
                 </span>
-                <strong style={{ color: "var(--navy)", fontSize: "0.95rem" }}>Add New Paper</strong>
+                <strong style={{ color: "var(--navy)", fontSize: "0.95rem" }}>＋ New Paper</strong>
                 <p style={{ margin: "4px 0 0 0", fontSize: "0.78rem", color: "var(--navy-muted)" }}>
                   Create and audit a new examination draft
                 </p>

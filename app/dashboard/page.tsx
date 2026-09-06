@@ -830,14 +830,16 @@ export default function DashboardPage() {
               onClick={() => setIsNewPaperModalOpen(true)}
               style={{
                 borderRadius: 8,
-                padding: "6px 14px",
-                fontSize: "0.82rem",
+                padding: "7px 16px",
+                fontSize: "0.85rem",
+                fontWeight: 700,
                 display: "inline-flex",
                 alignItems: "center",
                 gap: 6,
+                boxShadow: "0 2px 10px rgba(201, 168, 76, 0.3)",
               }}
             >
-              <span>+</span> Add Paper
+              <span style={{ fontSize: "1.05rem", lineHeight: 1 }}>＋</span> New Paper
             </button>
             <Link href="/" className="btn btn-outline btn-sm" style={{ textDecoration: "none" }}>
               Explore Features
