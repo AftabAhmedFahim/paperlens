@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
+import demoAnalyze from "@/data/demo-cache/analyze.json";
+import demoFix from "@/data/demo-cache/fix.json";
 import samplePaper from "@/data/sample-paper.json";
 import sampleCos from "@/data/sample-cos.json";
 import { buildAudit } from "@/lib/audit";
+import { DEMO_MODE } from "@/lib/demo";
 import { generateJson } from "@/lib/gemini";
 import { detectRepeats } from "@/lib/similarity";
 import {
@@ -58,8 +61,40 @@ export async function POST(req: Request) {
 }
 
 async function analyze(paper: Paper, cos: CourseOutcome[]): Promise<Audit> {
+  if (DEMO_MODE) return demoAudit(paper, cos);
   const classification = await classify(paper, cos);
   const repeats = await detectRepeats(paper);
+  return buildAudit(paper, cos, classification, repeats);
+}
+
+/**
+ * Offline demo path. Serves the cached classification and repeat verdicts from
+ * /data/demo-cache instead of calling Gemini, but still runs them through the
+ * real buildAudit, so a question added by /api/fix moves the score exactly as
+ * it would on the live path.
+ */
+function demoAudit(paper: Paper, cos: CourseOutcome[]): Audit {
+  const cached = demoAnalyze as Audit;
+  const known = new Map(cached.questionAnalysis.map((q) => [q.id, q]));
+
+  const classification = paper.questions.map((q) => {
+    const hit = known.get(q.id);
+    if (hit) return hit;
+    // A question appended by the fix-it loop.
+    if (q.text.trim() === demoFix.question.text.trim()) {
+      return { ...demoFix.classification, id: q.id, bloom: demoFix.classification.bloom as Bloom };
+    }
+    return {
+      id: q.id,
+      co: "NONE",
+      bloom: "Understand" as Bloom,
+      rationale: "Not present in the offline demo cache.",
+    };
+  });
+
+  const ids = new Set(paper.questions.map((q) => q.id));
+  const repeats = cached.repeats.filter((r) => ids.has(r.questionId));
+
   return buildAudit(paper, cos, classification, repeats);
 }
 
