@@ -385,13 +385,38 @@ const severityMeta = {
   low:    { label: "Low",    color: "#374151", bg: "#f9fafb", border: "#e5e7eb", dot: "#9ca3af" },
 };
 
+interface ActiveFixInfo {
+  question: Question;
+  targetCo?: string;
+  replacedQuestionId?: string;
+  issueMessage?: string;
+}
+
 interface IssuesProps {
   issues: Audit["issues"];
   onGenerateFix?: (issue: Audit["issues"][0], index: number) => void;
   generatingIndex?: number | null;
+  activeFix?: ActiveFixInfo | null;
+  fixError?: { index: number; message: string } | null;
+  onRerun?: () => void;
+  onAccept?: () => void;
+  onDismiss?: () => void;
+  isRerunning?: boolean;
+  isAccepted?: boolean;
 }
 
-export function Issues({ issues, onGenerateFix, generatingIndex }: IssuesProps) {
+export function Issues({
+  issues,
+  onGenerateFix,
+  generatingIndex,
+  activeFix,
+  fixError,
+  onRerun,
+  onAccept,
+  onDismiss,
+  isRerunning,
+  isAccepted,
+}: IssuesProps) {
   const sorted = [...issues].sort((a, b) => {
     const order = { high: 0, medium: 1, low: 2 };
     return order[a.severity] - order[b.severity];
@@ -408,28 +433,112 @@ export function Issues({ issues, onGenerateFix, generatingIndex }: IssuesProps) 
         {sorted.map((issue, i) => {
           const meta = severityMeta[issue.severity];
           const isGenerating = generatingIndex === i;
+          const isCurrentFix =
+            !!activeFix &&
+            (activeFix.issueMessage === issue.message ||
+              (!!activeFix.replacedQuestionId && issue.message.startsWith(activeFix.replacedQuestionId + " ")) ||
+              (!!activeFix.targetCo && issue.message.includes(activeFix.targetCo)));
+          const currentError = fixError?.index === i ? fixError.message : null;
+
           return (
             <div
               key={i}
+              id={`issue-row-${i}`}
               className="pl-issue-row"
-              style={{ background: meta.bg, borderColor: meta.border }}
+              style={{
+                background: isCurrentFix ? "#f0fdf4" : meta.bg,
+                borderColor: isCurrentFix ? "#10b981" : meta.border,
+                transition: "all 0.2s ease",
+              }}
             >
-              <span className="pl-issue-dot" style={{ background: meta.dot }} />
+              <span
+                className="pl-issue-dot"
+                style={{ background: isCurrentFix ? "#10b981" : meta.dot }}
+              />
               <div className="pl-issue-body">
-                <span className="pl-issue-badge" style={{ color: meta.color, background: meta.color + "18" }}>
-                  {meta.label}
-                </span>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
+                  <span
+                    className="pl-issue-badge"
+                    style={{ color: meta.color, background: meta.color + "18" }}
+                  >
+                    {meta.label}
+                  </span>
+                  {isCurrentFix && activeFix && (
+                    <span className="pl-fix-active-badge">
+                      ✓ Fix Ready (Question {activeFix.question.id})
+                    </span>
+                  )}
+                </div>
                 <p className="pl-issue-msg">{issue.message}</p>
+
+                {currentError && (
+                  <div className="pl-inline-fix-error">
+                    ⚠️ {currentError}
+                  </div>
+                )}
+
+                {isCurrentFix && activeFix && (
+                  <div className="pl-inline-fix-box">
+                    <div className="pl-inline-fix-meta">
+                      <span className="pl-inline-fix-tag">
+                        {activeFix.replacedQuestionId
+                          ? `Replacement for ${activeFix.replacedQuestionId}`
+                          : `Suggested Question ${activeFix.question.id}`}
+                      </span>
+                      <span className="pl-inline-fix-tag">{activeFix.question.marks} marks</span>
+                      {activeFix.targetCo && (
+                        <span className="pl-inline-fix-tag">{activeFix.targetCo}</span>
+                      )}
+                      {isAccepted && (
+                        <span className="pl-suggested-saved-badge">Saved to Paper</span>
+                      )}
+                    </div>
+                    <p className="pl-inline-fix-text">{activeFix.question.text}</p>
+                    <div className="pl-inline-fix-actions">
+                      {onAccept && (
+                        <button
+                          type="button"
+                          className={`pl-accept-btn ${isAccepted ? "pl-accept-btn-saved" : ""}`}
+                          onClick={onAccept}
+                          disabled={isRerunning || isAccepted}
+                        >
+                          {isAccepted ? "✓ Accepted" : "Accept fix"}
+                        </button>
+                      )}
+                      {onRerun && (
+                        <button
+                          type="button"
+                          className="pl-rerun-btn"
+                          onClick={onRerun}
+                          disabled={isRerunning}
+                        >
+                          {isRerunning ? "Auditing…" : "Re-run audit"}
+                        </button>
+                      )}
+                      {onDismiss && (
+                        <button
+                          type="button"
+                          className="pl-dismiss-btn"
+                          onClick={onDismiss}
+                          disabled={isRerunning}
+                        >
+                          Dismiss
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
+
               {onGenerateFix && (
                 <button
                   type="button"
-                  className="pl-fix-btn"
+                  className={`pl-fix-btn ${isCurrentFix ? "pl-fix-btn-active" : ""}`}
                   onClick={() => onGenerateFix(issue, i)}
                   disabled={generatingIndex !== null && generatingIndex !== undefined}
                   title={`Generate fix for this ${issue.severity}-severity issue`}
                 >
-                  {isGenerating ? "Generating fix…" : "Generate fix"}
+                  {isGenerating ? "Generating fix…" : isCurrentFix ? "Regenerate fix" : "Generate fix"}
                 </button>
               )}
             </div>
@@ -464,7 +573,7 @@ export function SuggestedQuestionCard({
   isAccepted = false,
 }: SuggestedQuestionCardProps) {
   return (
-    <div className="pl-suggested-card">
+    <div id="suggested-fix-card" className="pl-suggested-card">
       <div className="pl-suggested-header">
         <div className="pl-suggested-tags">
           <span className="pl-suggested-badge">
