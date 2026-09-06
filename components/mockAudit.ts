@@ -1,51 +1,4 @@
-export type Bloom =
-  | "Remember"
-  | "Understand"
-  | "Apply"
-  | "Analyze"
-  | "Evaluate"
-  | "Create";
-
-export type CoverageStatus = "ok" | "under" | "over" | "missing";
-
-export interface Coverage {
-  co: string;
-  questionIds: string[];
-  marks: number;
-  sharePct: number;
-  status: CoverageStatus;
-}
-
-export interface QuestionAnalysis {
-  id: string;
-  co: string;
-  bloom: Bloom;
-  rationale: string;
-}
-
-export interface Repeat {
-  questionId: string;
-  matchYear: string;
-  matchText: string;
-  similarity: number;
-  verdict: "flag" | "warn" | "ok";
-  reason: string;
-}
-
-export interface Issue {
-  severity: "high" | "medium" | "low";
-  message: string;
-  targetCo?: string;
-}
-
-export interface Audit {
-  healthScore: number;
-  coverage: Coverage[];
-  bloom: Record<Bloom, number>;
-  questionAnalysis: QuestionAnalysis[];
-  repeats: Repeat[];
-  issues: Issue[];
-}
+import { Audit } from "@/lib/types";
 
 export const mockAudit: Audit = {
   healthScore: 62,
@@ -169,8 +122,8 @@ export const mockAudit: Audit = {
       matchYear: "2023",
       matchText:
         "Define a database management system. State four advantages it offers over file-based data management.",
-      similarity: 91,
-      verdict: "flag",
+      similarity: 0.91,
+      verdict: "near-duplicate",
       reason:
         "Near-identical phrasing and identical scope. High chance students have access to the past solution.",
     },
@@ -179,8 +132,8 @@ export const mockAudit: Audit = {
       matchYear: "2022",
       matchText:
         "What are the ACID properties of a transaction? Explain each with an example.",
-      similarity: 78,
-      verdict: "warn",
+      similarity: 0.78,
+      verdict: "related",
       reason:
         "Substantial overlap in structure and expected answer. Consider adding a scenario-based twist.",
     },
