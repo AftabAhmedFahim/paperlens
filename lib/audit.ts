@@ -63,7 +63,10 @@ export function buildAudit(
   const lowerShare = LOWER.reduce((s, l) => s + bloom[l], 0);
   const missing = coverage.filter((c) => c.status === "missing");
   const under = coverage.filter((c) => c.status === "under");
-  const nearDupes = repeats.filter((r) => r.verdict === "near-duplicate").length;
+  // A question matched against three past papers is one repeated question, not three.
+  const nearDupes = new Set(
+    repeats.filter((r) => r.verdict === "near-duplicate").map((r) => r.questionId)
+  ).size;
 
   const skewPenalty = Math.min(
     SKEW_MAX_PENALTY,
