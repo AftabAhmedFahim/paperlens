@@ -65,7 +65,7 @@ export default function LoginPage() {
       }
 
       // Hard navigation ensures server cookies and server state refresh cleanly
-      window.location.href = "/";
+      window.location.href = "/dashboard";
     } catch {
       setError("Could not reach authentication service. Please try again.");
       setLoading(false);
@@ -82,7 +82,7 @@ export default function LoginPage() {
     <div className="login-page-wrapper">
       <div className="login-card-container">
         <Link
-          href="/landing"
+          href="/"
           style={{
             position: "absolute",
             top: 20,
@@ -95,7 +95,7 @@ export default function LoginPage() {
             gap: 4,
           }}
         >
-          ← Back to Tour
+          ← Back to Home
         </Link>
 
         <div style={{ textAlign: "center", marginBottom: 28, marginTop: 14 }}>
