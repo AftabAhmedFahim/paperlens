@@ -1,26 +1,122 @@
 [
-  { "id": "PY-2023-01", "year": "2023", "course": "CSE 3103", "text": "Define a database management system and state four advantages of using a DBMS instead of a file-processing system." },
-  { "id": "PY-2023-02", "year": "2023", "course": "CSE 3103", "text": "Describe the three-schema architecture of a database system. Explain logical data independence and physical data independence." },
-  { "id": "PY-2023-03", "year": "2023", "course": "CSE 3103", "text": "Draw an ER diagram for a hospital management system with patients, doctors, appointments and wards. Show all cardinality constraints." },
-  { "id": "PY-2023-04", "year": "2023", "course": "CSE 3103", "text": "Write relational algebra expressions to retrieve the names of employees who work in the Research department and earn more than 40000." },
-  { "id": "PY-2023-05", "year": "2023", "course": "CSE 3103", "text": "What is a B+ tree index? Compare a dense index with a sparse index in terms of storage and lookup cost." },
-  { "id": "PY-2023-06", "year": "2023", "course": "CSE 3103", "text": "Explain the two-phase locking protocol. Show with a schedule how strict 2PL avoids cascading rollback." },
-  { "id": "PY-2022-01", "year": "2022", "course": "CSE 3103", "text": "State the ACID properties of a transaction and explain each one with an appropriate example." },
-  { "id": "PY-2022-02", "year": "2022", "course": "CSE 3103", "text": "Given Employee(emp_id, project_id, hours, emp_name, dept_name, dept_head) with the given functional dependencies, normalise the relation up to 3NF showing every intermediate relation." },
-  { "id": "PY-2022-03", "year": "2022", "course": "CSE 3103", "text": "Map the given ER diagram into relational schemas and identify the primary key and foreign key of each resulting relation." },
-  { "id": "PY-2022-04", "year": "2022", "course": "CSE 3103", "text": "Using the schema Student(id, name, dept, cgpa), write SQL queries to list the top five students by CGPA and to count the number of students in each department." },
-  { "id": "PY-2022-05", "year": "2022", "course": "CSE 3103", "text": "Differentiate between conflict serializability and view serializability with examples." },
-  { "id": "PY-2022-06", "year": "2022", "course": "CSE 3103", "text": "Explain the ARIES recovery algorithm. What is the role of the write-ahead logging protocol in it?" },
-  { "id": "PY-2021-01", "year": "2021", "course": "CSE 3103", "text": "What is data independence? Explain the three levels of abstraction used in a DBMS with a neat diagram." },
-  { "id": "PY-2021-02", "year": "2021", "course": "CSE 3103", "text": "Explain the difference between a candidate key, a super key and a foreign key with examples from a library database." },
-  { "id": "PY-2021-03", "year": "2021", "course": "CSE 3103", "text": "A query joins three large relations. Evaluate two alternative query plans and justify which one the optimiser should choose based on estimated cost." },
-  { "id": "PY-2021-04", "year": "2021", "course": "CSE 3103", "text": "Write SQL statements to create a table with appropriate constraints and to find students who have never enrolled in any course." },
-  { "id": "PY-2021-05", "year": "2021", "course": "CSE 3103", "text": "Explain deadlock in a database system. Describe wait-die and wound-wait deadlock prevention schemes." },
-  { "id": "PY-2021-06", "year": "2021", "course": "CSE 3103", "text": "Draw an ER diagram for an online bookstore and convert it into a normalised relational schema." },
-  { "id": "PY-2020-01", "year": "2020", "course": "CSE 3103", "text": "List and explain the responsibilities of a database administrator." },
-  { "id": "PY-2020-02", "year": "2020", "course": "CSE 3103", "text": "Define functional dependency. Compute the closure of the given attribute set and identify all candidate keys of the relation." },
-  { "id": "PY-2020-03", "year": "2020", "course": "CSE 3103", "text": "Explain hashing-based indexing. When would you prefer a hash index over a B+ tree index for a given workload?" },
-  { "id": "PY-2020-04", "year": "2020", "course": "CSE 3103", "text": "What is a transaction? Explain the states in the transaction state diagram." },
-  { "id": "PY-2020-05", "year": "2020", "course": "CSE 3103", "text": "Write SQL queries using GROUP BY and HAVING to report the average grade per course for courses with more than twenty enrolled students." },
-  { "id": "PY-2020-06", "year": "2020", "course": "CSE 3103", "text": "Explain BCNF. Show that a relation in 3NF need not be in BCNF using a counter-example." }
+  {
+    "year": "2022",
+    "text": "Consider the relation Assignment(staff_id, staff_name, task_id, task_title, hours_logged, unit_name, unit_head) with the following functional dependencies: staff_id -> staff_name, unit_name; unit_name -> unit_head; task_id -> task_title; staff_id, task_id -> hours_logged. (i) Identify the candidate key of the relation and justify your answer. (ii) Identify the insertion, deletion and update anomalies present in the relation. (iii) Decompose the relation up to 3NF, showing the relations obtained at each step."
+  },
+  {
+    "year": "2022",
+    "text": "What is a database management system? Discuss four advantages of the database approach over the conventional file-processing system."
+  },
+  {
+    "year": "2022",
+    "text": "Explain the three-schema architecture of a DBMS with a neat diagram. What do you mean by logical data independence and physical data independence?"
+  },
+  {
+    "year": "2022",
+    "text": "Consider the schema Supplier(sup_id, sname, city) and Supply(sup_id, part_id, qty). Write relational algebra expressions to find (i) the names of the suppliers who supply the part 'P2', and (ii) the names of the suppliers located in 'Chittagong'."
+  },
+  {
+    "year": "2022",
+    "text": "Define functional dependency. For the relation R(A, B, C, D, E) with the functional dependencies A -> C, B -> D and AB -> E, compute the closure of the attribute set {A, B}."
+  },
+  {
+    "year": "2022",
+    "text": "Differentiate between DDL and DML with suitable SQL examples of each."
+  },
+  {
+    "year": "2022",
+    "text": "What is a deadlock? Explain the wait-die and the wound-wait deadlock prevention schemes with suitable examples."
+  },
+  {
+    "year": "2022",
+    "text": "Explain the two-phase locking protocol. Show with a schedule how strict two-phase locking prevents cascading rollback."
+  },
+  {
+    "year": "2022",
+    "text": "What is an index? Distinguish between a dense index and a sparse index in terms of storage requirement and search cost."
+  },
+  {
+    "year": "2022",
+    "text": "Consider the relations Employee(emp_id, ename, salary, dept_id) and Department(dept_id, dname, city). (i) Write a relational algebra expression to find the names of the employees who work in the departments located in 'Khulna'. (ii) Write an SQL query to list the name of each department along with the total salary paid by that department. (iii) Write an SQL query to find the departments that have no employee."
+  },
+  {
+    "year": "2023",
+    "text": "Describe the four ACID properties of a transaction. For each property, give an example from an airline reservation system in which a violation of that property would leave the database in an inconsistent state."
+  },
+  {
+    "year": "2023",
+    "text": "Draw an ER diagram for an online bookshop that sells books supplied by several publishers to registered customers. Show all entity sets, relationship sets and primary key attributes. Explain why a many-to-many relationship set must be represented by a separate relation."
+  },
+  {
+    "year": "2023",
+    "text": "What is a view in SQL? Explain with an example why some views cannot be updated."
+  },
+  {
+    "year": "2023",
+    "text": "Explain conflict serializability. Determine whether the schedule S: r1(A) w1(A) r2(A) w2(A) r1(B) w1(B) is conflict serializable by drawing its precedence graph."
+  },
+  {
+    "year": "2023",
+    "text": "What is a transaction log? Explain the write-ahead logging protocol and state its role during recovery."
+  },
+  {
+    "year": "2023",
+    "text": "Explain the difference between a clustering index and a secondary index with suitable examples."
+  },
+  {
+    "year": "2023",
+    "text": "Consider the relation R(A, B, C, D) with the functional dependencies AB -> C, C -> D and D -> A. Determine whether the decomposition of R into R1(A, B, C) and R2(C, D) is lossless."
+  },
+  {
+    "year": "2023",
+    "text": "What is a stored procedure? Write a stored procedure that increases the salary of all the employees of a given department by 10 percent."
+  },
+  {
+    "year": "2023",
+    "text": "Explain the structure of a B+ tree index. Show the insertion of the key 25 into a B+ tree of order 3 that contains the keys 10, 20, 30 and 40."
+  },
+  {
+    "year": "2023",
+    "text": "Define generalisation and specialisation in the ER model with a suitable example of each."
+  },
+  {
+    "year": "2024",
+    "text": "Define the following terms with reference to the relational data model: (i) relation instance, (ii) cardinality of a relation, (iii) attribute domain, (iv) superkey. State the entity integrity constraint and the referential integrity constraint."
+  },
+  {
+    "year": "2024",
+    "text": "What is a trigger? Write an SQL trigger that records every deletion from the Employee table into an audit table."
+  },
+  {
+    "year": "2024",
+    "text": "Explain the lost update problem and the dirty read problem with suitable example schedules."
+  },
+  {
+    "year": "2024",
+    "text": "Explain the difference between a shared lock and an exclusive lock. What is meant by a lock upgrade?"
+  },
+  {
+    "year": "2024",
+    "text": "Consider the relations Flight(flight_no, source, destination, fare) and Booking(pnr, flight_no, passenger_name, seat_no). Write SQL statements to (i) create the Booking table with an appropriate foreign key, and (ii) find the flight numbers having more than 50 bookings."
+  },
+  {
+    "year": "2024",
+    "text": "What is a checkpoint? Explain how checkpoints reduce the amount of work to be done during recovery after a system crash."
+  },
+  {
+    "year": "2024",
+    "text": "Explain the ER model concepts of a composite attribute, a multivalued attribute and a derived attribute with suitable examples."
+  },
+  {
+    "year": "2024",
+    "text": "What do you mean by a distributed database? State two advantages and two disadvantages of data fragmentation."
+  },
+  {
+    "year": "2024",
+    "text": "Explain the phantom read problem. How does the serializable isolation level prevent it?"
+  },
+  {
+    "year": "2024",
+    "text": "Explain hash-based indexing. Under what circumstances would a hash index be preferred over a B+ tree index?"
+  }
 ]

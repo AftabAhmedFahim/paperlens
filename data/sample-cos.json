@@ -1,32 +1,32 @@
 [
   {
     "id": "CO1",
-    "text": "Explain fundamental database concepts, DBMS architecture, and the relational data model.",
-    "targetBloom": "Understand"
+    "text": "State the components of the relational data model, its keys and its integrity constraints.",
+    "targetBloom": "Remember"
   },
   {
     "id": "CO2",
-    "text": "Design an entity-relationship model for a given application domain and map it to a relational schema.",
+    "text": "Construct an entity-relationship model for a given application domain and map it to a relational schema.",
     "targetBloom": "Apply"
   },
   {
     "id": "CO3",
-    "text": "Formulate queries over a relational database using relational algebra and SQL.",
+    "text": "Formulate queries against a relational database using relational algebra and SQL.",
     "targetBloom": "Apply"
   },
   {
     "id": "CO4",
-    "text": "Analyse functional dependencies in a relation and apply normalisation up to BCNF to eliminate update anomalies.",
+    "text": "Analyse the functional dependencies of a relation to identify anomalies and decompose it into a normal form.",
     "targetBloom": "Analyze"
   },
   {
     "id": "CO5",
-    "text": "Evaluate transaction concurrency control and recovery mechanisms for correctness under concurrent execution.",
-    "targetBloom": "Evaluate"
+    "text": "Explain transaction processing, concurrency control protocols and recovery mechanisms.",
+    "targetBloom": "Understand"
   },
   {
     "id": "CO6",
-    "text": "Assess indexing structures and query-optimisation strategies, and justify a design choice for a given workload.",
+    "text": "Evaluate alternative database designs and indexing strategies for a given workload and justify the preferred option.",
     "targetBloom": "Evaluate"
   }
 ]

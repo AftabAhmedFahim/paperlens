@@ -1,46 +1,46 @@
 {
-  "course": "CSE 3103 - Database Management Systems (AUST, Semester Final)",
-  "totalMarks": 100,
+  "course": "CSE 3103",
+  "totalMarks": 60,
   "questions": [
     {
-      "id": "Q1",
-      "text": "Define a database management system. List four advantages of a DBMS over a traditional file-processing system.",
+      "id": "1a",
+      "text": "Define the following terms with reference to the relational data model: (i) relation schema, (ii) degree of a relation, (iii) domain of an attribute, (iv) superkey. State the entity integrity constraint and the referential integrity constraint.",
       "marks": 8
     },
     {
-      "id": "Q2",
-      "text": "Explain the three-schema architecture of a DBMS. Describe the two levels of data independence it provides.",
+      "id": "1b",
+      "text": "Consider the following schema:\nStudent(student_id, name, dept_code, cgpa)\nDepartment(dept_code, dept_name, hod_name)\nWith reference to the above schema, explain the difference between a candidate key, a primary key and a foreign key. Describe what happens to the tuples of Student when a Department tuple is deleted under the ON DELETE CASCADE option and under the ON DELETE SET NULL option.",
+      "marks": 9
+    },
+    {
+      "id": "2a",
+      "text": "A private university wishes to computerise its course registration process. A student is identified by a student id and has a name and a department. A course has a course code, a title and credit hours. A course is offered as one or more sections in a semester, and every section is taught by exactly one teacher. A student may register for many sections and a section may have many students registered in it.\nDraw an ER diagram for the above scenario. Show all entity sets, relationship sets, primary key attributes, and the cardinality and participation constraints.",
+      "marks": 7
+    },
+    {
+      "id": "2b",
+      "text": "Convert the ER diagram of Question 2(a) into a set of relations. For each relation, underline the primary key and clearly indicate the foreign keys, if any.",
+      "marks": 6
+    },
+    {
+      "id": "3a",
+      "text": "Consider the following schema:\nBook(isbn, title, author, price, publisher_id)\nPublisher(publisher_id, pname, city)\nSales(isbn, branch_code, quantity)\n(i) Write a relational algebra expression to find the titles of the books published by publishers located in 'Dhaka'.\n(ii) Write an SQL query to list the name of each publisher along with the total quantity of books sold by that publisher.\n(iii) Write an SQL query to find the titles of the books that have never been sold.",
+      "marks": 7
+    },
+    {
+      "id": "3b",
+      "text": "Consider the relation\nProject(emp_id, emp_name, project_id, project_name, hours_worked, dept_name, dept_head)\nwith the following functional dependencies:\nemp_id -> emp_name, dept_name\ndept_name -> dept_head\nproject_id -> project_name\nemp_id, project_id -> hours_worked\n(i) Identify the candidate key of the relation and justify your answer.\n(ii) Identify the insertion, deletion and update anomalies present in the relation.\n(iii) Decompose the relation up to 3NF, showing the relations obtained at each step.",
+      "marks": 7
+    },
+    {
+      "id": "4a",
+      "text": "Explain the ACID properties of a transaction. For each property, describe one situation in a banking application in which a violation of that property would leave the database in an incorrect state.",
       "marks": 10
     },
     {
-      "id": "Q3",
-      "text": "Draw an ER diagram for a university course-registration system covering students, courses, sections and instructors. Mark all cardinality and participation constraints.",
-      "marks": 15
-    },
-    {
-      "id": "Q4",
-      "text": "Map the ER diagram of Question 3 into a set of relational schemas. Clearly identify the primary key and foreign keys of every relation.",
-      "marks": 12
-    },
-    {
-      "id": "Q5",
-      "text": "Consider Enrollment(student_id, course_id, semester, grade, instructor_name, instructor_dept) with FDs: student_id, course_id, semester -> grade; course_id, semester -> instructor_name; instructor_name -> instructor_dept. Normalise the relation up to 3NF, showing each intermediate step.",
-      "marks": 12
-    },
-    {
-      "id": "Q6",
-      "text": "Using the schema Student(id, name, dept, cgpa) and Enrollment(id, course_id, grade), write SQL statements to: (a) list students with CGPA above 3.50 ordered by CGPA, (b) count enrolments per department, (c) find students who have never enrolled in any course.",
-      "marks": 14
-    },
-    {
-      "id": "Q7",
-      "text": "State the ACID properties of a transaction. Briefly explain each property with a suitable example.",
-      "marks": 14
-    },
-    {
-      "id": "Q8",
-      "text": "Explain conflict serializability and view serializability. Give one example schedule that is view serializable but not conflict serializable.",
-      "marks": 15
+      "id": "4b",
+      "text": "What is a schedule? List the states through which a transaction passes during its execution and name the two types of failure that a recovery manager must handle.",
+      "marks": 6
     }
   ]
 }
