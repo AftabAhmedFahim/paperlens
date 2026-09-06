@@ -9,6 +9,8 @@ import { Audit, Paper, Question } from "./types";
  *  ------------------------------------------------------------------ */
 const TOP_N = 5;
 const MIN_COSINE = 0.25; // anything below this is not worth a model call
+const FALLBACK_NEAR_DUPLICATE = 0.6;
+const FALLBACK_RELATED = 0.4;
 
 type BankEntry = { year: string; text: string };
 
@@ -140,14 +142,14 @@ Return ONLY a raw JSON array with one entry per pair index. No markdown, no code
   try {
     raw = await generateJson(prompt);
   } catch (e) {
-    console.error("[similarity/judge]", e);
-    return [];
+    console.error("[similarity/judge] falling back to raw cosine:", e);
+    return cosineFallback(pairs);
   }
 
   const arr = Array.isArray(raw) ? raw : (raw as any)?.results ?? [];
   if (!Array.isArray(arr) || !arr.length) {
-    console.error("[similarity/judge] unusable model response");
-    return [];
+    console.error("[similarity/judge] unusable model response, falling back to raw cosine");
+    return cosineFallback(pairs);
   }
 
   const repeats: Audit["repeats"] = [];
@@ -167,6 +169,28 @@ Return ONLY a raw JSON array with one entry per pair index. No markdown, no code
     });
   }
   return repeats.sort((a, b) => b.similarity - a.similarity);
+}
+
+/**
+ * The model is optional. If the call fails or comes back unusable we still
+ * report repeats from the stage-1 cosine alone, so a network hiccup degrades
+ * the reasons rather than removing the feature.
+ */
+export function cosineFallback(pairs: Pair[]): Audit["repeats"] {
+  return pairs
+    .filter((p) => p.similarity > FALLBACK_RELATED)
+    .map((p) => ({
+      questionId: p.questionId,
+      matchYear: p.matchYear,
+      matchText: p.matchText,
+      similarity: p.similarity,
+      verdict:
+        p.similarity > FALLBACK_NEAR_DUPLICATE
+          ? ("near-duplicate" as const)
+          : ("related" as const),
+      reason: "high lexical overlap",
+    }))
+    .sort((a, b) => b.similarity - a.similarity);
 }
 
 /** Both stages. */
