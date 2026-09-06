@@ -2,18 +2,24 @@
   {
     "id": "fac-01",
     "name": "Dr. Mahmudul Hasan",
+    "email": "hasan@aust.edu",
+    "passwordHash": "$2b$10$ebMVMBeZy0SD0TaPZAiDvukn.9vhI9QaCip1SkcBqAm9tPyjwnI5e",
     "department": "Computer Science and Engineering, AUST",
     "courses": ["CSE 3103 - Database Management Systems", "CSE 4101 - Software Engineering"]
   },
   {
     "id": "fac-02",
     "name": "Dr. Nusrat Jahan",
+    "email": "jahan@aust.edu",
+    "passwordHash": "$2b$10$t5zp4dzJqTQIWdDJAnMG2.IiR1z3.jvqJ63.K7FwnVSf0W3B92q1W",
     "department": "Computer Science and Engineering, AUST",
     "courses": ["CSE 2201 - Data Structures", "CSE 3205 - Operating Systems"]
   },
   {
     "id": "fac-03",
     "name": "Dr. Tanvir Ahmed",
+    "email": "ahmed@aust.edu",
+    "passwordHash": "$2b$10$X9IFckJtAYwWYCvVFVuJ3.Y3P97tiIoikCbGJ0bJAcKmwoIvYKTX.",
     "department": "Computer Science and Engineering, AUST",
     "courses": ["CSE 1101 - Structured Programming", "CSE 3103 - Database Management Systems"]
   }
