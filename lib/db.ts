@@ -208,6 +208,7 @@ export function getPaper(id: string): (Paper & { id: string; title: string; facu
     id: q.qid,
     text: q.text,
     marks: q.marks,
+    ...((q as any).is_suggested ? { is_suggested: 1 } : {}),
   }));
 
   return {

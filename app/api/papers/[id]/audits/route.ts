@@ -31,9 +31,8 @@ export async function POST(
   try {
     const { id: paperId } = await props.params;
     const faculty = await getCurrentFaculty();
-    const facultyId = faculty?.id || DEFAULT_FACULTY_ID;
-
     const body = await req.json();
+    const facultyId = body.facultyId || faculty?.id || DEFAULT_FACULTY_ID;
     const audit: Audit = body.audit || body;
     const healthScore: number =
       typeof body.healthScore === "number" ? body.healthScore : audit.healthScore ?? 0;

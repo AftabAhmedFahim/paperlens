@@ -22,6 +22,7 @@ import {
   loadHistory,
   saveHistory,
 } from "@/components/AuditHistory";
+import { PaperLibrary, PaperMeta } from "@/components/PaperLibrary";
 
 type Screen = "upload" | "analyzing" | "report";
 
@@ -36,6 +37,11 @@ export default function Home() {
   const [currentAudit, setCurrentAudit] = useState<Audit | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // ── Database & Paper Library state ──
+  const [currentPaperId, setCurrentPaperId] = useState<string | null>("paper-cse3103-sample");
+  const [papers, setPapers] = useState<PaperMeta[]>([]);
+  const [loadingPapers, setLoadingPapers] = useState(false);
+
   // ── Fix-it loop state ──
   const [generatingCo, setGeneratingCo] = useState<string | null>(null);
   const [suggestedFix, setSuggestedFix] = useState<{
@@ -43,16 +49,73 @@ export default function Home() {
     targetCo: string;
     targetBloom: Bloom;
   } | null>(null);
+  const [fixAccepted, setFixAccepted] = useState(false);
   const [isRerunning, setIsRerunning] = useState(false);
 
   // ── Faculty state ──
   const [activeFaculty, setActiveFaculty] = useState<Faculty>(FACULTY[0]);
   const [history, setHistory] = useState<AuditRecord[]>([]);
 
-  // Load history from localStorage when faculty changes or on first mount
-  useEffect(() => {
+  // Fetch papers for active faculty
+  const fetchPapers = useCallback(async (facultyId: string) => {
+    try {
+      setLoadingPapers(true);
+      const res = await fetch(`/api/papers?facultyId=${facultyId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setPapers(data.papers || []);
+      }
+    } catch (err) {
+      console.error("[fetchPapers] error:", err);
+    } finally {
+      setLoadingPapers(false);
+    }
+  }, []);
+
+  // Fetch audits from server for a specific paper
+  const fetchAuditsForPaper = useCallback(async (paperId: string) => {
+    try {
+      const res = await fetch(`/api/papers/${paperId}/audits`);
+      if (res.ok) {
+        const data = await res.json();
+        const mapped: AuditRecord[] = (data.audits || []).map((a: any) => ({
+          id: a.id,
+          paperCourse: paper.course || "CSE 3103",
+          healthScore: a.healthScore,
+          timestamp: a.created_at,
+          issueCount: a.audit?.issues?.length || 0,
+          audit: a.audit,
+        }));
+        setHistory(mapped);
+        return;
+      }
+    } catch (err) {
+      console.warn("[fetchAuditsForPaper] server fetch failed, fallback to localStorage:", err);
+    }
     setHistory(loadHistory(activeFaculty.id));
-  }, [activeFaculty.id]);
+  }, [activeFaculty.id, paper.course]);
+
+  // Load papers and initial paper state/audits on mount and faculty change
+  useEffect(() => {
+    fetchPapers(activeFaculty.id);
+    const pid = currentPaperId || (activeFaculty.id === "fac-01" ? "paper-cse3103-sample" : null);
+    if (pid) {
+      fetchAuditsForPaper(pid);
+      fetch(`/api/papers/${pid}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data) => {
+          if (data && data.paper) {
+            setPaper(data.paper);
+            setCourseOutcomes(data.courseOutcomes);
+            const hasSuggested = data.paper.questions.some((q: any) => q.is_suggested);
+            if (hasSuggested) setFixAccepted(true);
+          }
+        })
+        .catch(() => {});
+    } else {
+      setHistory(loadHistory(activeFaculty.id));
+    }
+  }, [activeFaculty.id, fetchPapers, fetchAuditsForPaper]);
 
   const switchFaculty = useCallback((f: Faculty) => {
     setActiveFaculty(f);
@@ -62,22 +125,106 @@ export default function Home() {
     setCosText("");
     setCurrentAudit(null);
     setSuggestedFix(null);
+    setFixAccepted(false);
     setError(null);
     setScreen("upload");
-  }, []);
 
-  function loadSample() {
+    const defaultPid = f.id === "fac-01" ? "paper-cse3103-sample" : null;
+    setCurrentPaperId(defaultPid);
+    fetchPapers(f.id);
+    if (defaultPid) {
+      fetchAuditsForPaper(defaultPid);
+    } else {
+      setHistory([]);
+    }
+  }, [fetchPapers, fetchAuditsForPaper]);
+
+  async function loadSample() {
+    setError(null);
+    setSuggestedFix(null);
+    setFixAccepted(false);
+
+    try {
+      // Ensure the sample paper in DB is reset to pristine 8 questions (60 marks)
+      await fetch("/api/papers/paper-cse3103-sample", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          questions: samplePaperJson.questions,
+        }),
+      });
+    } catch (err) {
+      console.warn("Could not reset sample paper in DB:", err);
+    }
+
+    setCurrentPaperId("paper-cse3103-sample");
     setPaper(samplePaperJson as Paper);
     setCourseOutcomes(sampleCosJson as CourseOutcome[]);
     setPaperText(JSON.stringify(samplePaperJson, null, 2));
     setCosText(JSON.stringify(sampleCosJson, null, 2));
-    setError(null);
+    fetchAuditsForPaper("paper-cse3103-sample");
+    fetchPapers(activeFaculty.id);
   }
 
-  async function runAudit(paperToAudit: Paper, cosToAudit: CourseOutcome[]) {
+  async function handleSelectPaper(paperId: string) {
+    try {
+      const res = await fetch(`/api/papers/${paperId}`);
+      if (!res.ok) {
+        throw new Error(`Failed to load paper (${res.status})`);
+      }
+      const data = await res.json();
+      setCurrentPaperId(data.id);
+      setPaper(data.paper);
+      setCourseOutcomes(data.courseOutcomes);
+      setPaperText(JSON.stringify(data.paper, null, 2));
+      setCosText(JSON.stringify(data.courseOutcomes, null, 2));
+      setSuggestedFix(null);
+      setFixAccepted(false);
+      setError(null);
+      fetchAuditsForPaper(data.id);
+      runAudit(data.paper, data.courseOutcomes, data.id);
+    } catch (err: any) {
+      console.error("[handleSelectPaper] error:", err);
+      setError(err?.message || "Failed to load paper from library.");
+    }
+  }
+
+  async function handleDeletePaper(paperId: string) {
+    try {
+      const res = await fetch(`/api/papers/${paperId}`, { method: "DELETE" });
+      if (!res.ok) {
+        throw new Error(`Failed to delete paper (${res.status})`);
+      }
+      fetchPapers(activeFaculty.id);
+      if (currentPaperId === paperId) {
+        setCurrentPaperId("paper-cse3103-sample");
+        setHistory([]);
+      }
+    } catch (err: any) {
+      console.error("[handleDeletePaper] error:", err);
+      setError(err?.message || "Failed to delete paper.");
+    }
+  }
+
+  async function handleDeleteAudit(auditId: string) {
+    try {
+      const res = await fetch(`/api/audits/${auditId}`, { method: "DELETE" });
+      if (!res.ok) {
+        throw new Error(`Failed to delete audit (${res.status})`);
+      }
+      setHistory((prev) => prev.filter((r) => r.id !== auditId));
+      fetchPapers(activeFaculty.id);
+    } catch (err: any) {
+      console.error("[handleDeleteAudit] error:", err);
+      setError(err?.message || "Failed to delete audit.");
+    }
+  }
+
+  async function runAudit(paperToAudit: Paper, cosToAudit: CourseOutcome[], paperId?: string) {
     setScreen("analyzing");
     setError(null);
 
+    const targetPaperId = paperId || currentPaperId;
     const minWaitPromise = new Promise((resolve) => setTimeout(resolve, 2500));
     const fetchPromise = fetch("/api/analyze", {
       method: "POST",
@@ -95,17 +242,39 @@ export default function Home() {
       const [_, result] = await Promise.all([minWaitPromise, fetchPromise]);
       setCurrentAudit(result);
 
-      // Append real audit to history
+      let newRecordId: string | undefined;
+      if (targetPaperId) {
+        try {
+          const saveRes = await fetch(`/api/papers/${targetPaperId}/audits`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              healthScore: result.healthScore,
+              audit: result,
+              facultyId: activeFaculty.id,
+            }),
+          });
+          if (saveRes.ok) {
+            const saveData = await saveRes.json();
+            newRecordId = saveData.id;
+          }
+        } catch (saveErr) {
+          console.warn("[runAudit] failed to persist audit to DB:", saveErr);
+        }
+      }
+
       const record: AuditRecord = {
+        id: newRecordId,
         paperCourse: paperToAudit.course || "CSE 3103",
         healthScore: result.healthScore,
         timestamp: new Date().toISOString(),
         issueCount: result.issues.length,
         audit: result,
       };
-      const updated = [record, ...history];
+      const updated = [record, ...history.filter((h) => h.id !== newRecordId)];
       setHistory(updated);
       saveHistory(activeFaculty.id, updated);
+      fetchPapers(activeFaculty.id);
 
       setScreen("report");
     } catch (err: any) {
@@ -137,7 +306,7 @@ export default function Home() {
 
     setPaper(parsedPaper);
     setCourseOutcomes(parsedCos);
-    runAudit(parsedPaper, parsedCos);
+    runAudit(parsedPaper, parsedCos, currentPaperId || undefined);
   }
 
   function loadFromHistory(record: AuditRecord) {
@@ -173,10 +342,11 @@ export default function Home() {
         throw new Error((newQuestion as any).error);
       }
 
+      const qWithSuggested = { ...newQuestion, is_suggested: 1 };
       const alreadyExists = paper.questions.some((q) => q.id === newQuestion.id);
       const extendedQuestions = alreadyExists
         ? paper.questions
-        : [...paper.questions, newQuestion];
+        : [...paper.questions, qWithSuggested];
 
       const extendedTotalMarks = extendedQuestions.reduce((s, q) => s + (q.marks || 0), 0);
       const updatedPaper: Paper = {
@@ -191,6 +361,7 @@ export default function Home() {
         targetCo,
         targetBloom,
       });
+      setFixAccepted(false);
     } catch (err: any) {
       console.error("[handleGenerateFix] error:", err);
       setError(err?.message || "Failed to generate fix question.");
@@ -199,11 +370,52 @@ export default function Home() {
     }
   }
 
+  async function handleAcceptFix() {
+    if (!suggestedFix || !currentPaperId) return;
+    try {
+      const questionsToSave = paper.questions.map((q) => ({
+        id: q.id,
+        text: q.text,
+        marks: q.marks,
+        is_suggested: q.id === suggestedFix.question.id || (q as any).is_suggested ? 1 : 0,
+      }));
+
+      const res = await fetch(`/api/papers/${currentPaperId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ questions: questionsToSave }),
+      });
+
+      if (res.ok) {
+        setFixAccepted(true);
+        fetchPapers(activeFaculty.id);
+      }
+    } catch (err) {
+      console.error("[handleAcceptFix] error:", err);
+    }
+  }
+
   async function handleRerunAudit() {
     setIsRerunning(true);
     setError(null);
 
     try {
+      // Ensure the suggested fix is saved to SQLite
+      if (suggestedFix && currentPaperId && !fixAccepted) {
+        const questionsToSave = paper.questions.map((q) => ({
+          id: q.id,
+          text: q.text,
+          marks: q.marks,
+          is_suggested: q.id === suggestedFix.question.id || (q as any).is_suggested ? 1 : 0,
+        }));
+        await fetch(`/api/papers/${currentPaperId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ questions: questionsToSave }),
+        });
+        setFixAccepted(true);
+      }
+
       const res = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -217,16 +429,39 @@ export default function Home() {
       const updatedAudit: Audit = await res.json();
       setCurrentAudit(updatedAudit);
 
+      let newRecordId: string | undefined;
+      if (currentPaperId) {
+        try {
+          const saveRes = await fetch(`/api/papers/${currentPaperId}/audits`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              healthScore: updatedAudit.healthScore,
+              audit: updatedAudit,
+              facultyId: activeFaculty.id,
+            }),
+          });
+          if (saveRes.ok) {
+            const saveData = await saveRes.json();
+            newRecordId = saveData.id;
+          }
+        } catch (saveErr) {
+          console.warn("[handleRerunAudit] failed to persist audit to DB:", saveErr);
+        }
+      }
+
       const record: AuditRecord = {
+        id: newRecordId,
         paperCourse: paper.course || "CSE 3103",
         healthScore: updatedAudit.healthScore,
         timestamp: new Date().toISOString(),
         issueCount: updatedAudit.issues.length,
         audit: updatedAudit,
       };
-      const updated = [record, ...history];
+      const updated = [record, ...history.filter((h) => h.id !== newRecordId)];
       setHistory(updated);
       saveHistory(activeFaculty.id, updated);
+      fetchPapers(activeFaculty.id);
     } catch (err: any) {
       console.error("[handleRerunAudit] error:", err);
       setError(err?.message || "Failed to re-run audit.");
@@ -235,7 +470,7 @@ export default function Home() {
     }
   }
 
-  function handleRejectSuggestion() {
+  async function handleRejectSuggestion() {
     if (!suggestedFix) return;
     const filteredQuestions = paper.questions.filter((q) => q.id !== suggestedFix.question.id);
     const total = filteredQuestions.reduce((s, q) => s + (q.marks || 0), 0);
@@ -245,6 +480,20 @@ export default function Home() {
       totalMarks: total,
     });
     setSuggestedFix(null);
+    setFixAccepted(false);
+
+    if (currentPaperId && fixAccepted) {
+      try {
+        await fetch(`/api/papers/${currentPaperId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ questions: filteredQuestions }),
+        });
+        fetchPapers(activeFaculty.id);
+      } catch (err) {
+        console.error("[handleRejectSuggestion] error reverting DB:", err);
+      }
+    }
   }
 
   const totalMarks = paper.questions.reduce((s, q) => s + (q.marks || 0), 0) || paper.totalMarks || 60;
@@ -300,6 +549,15 @@ export default function Home() {
               </p>
             </div>
 
+            <PaperLibrary
+              papers={papers}
+              activePaperId={currentPaperId}
+              onSelect={handleSelectPaper}
+              onDelete={handleDeletePaper}
+              facultyName={activeFaculty.name}
+              loading={loadingPapers}
+            />
+
             <div className="pl-upload-panels">
               <UploadPanel
                 id="paper-input"
@@ -344,6 +602,7 @@ export default function Home() {
               <AuditHistory
                 records={history}
                 onSelect={loadFromHistory}
+                onDelete={handleDeleteAudit}
                 facultyName={activeFaculty.name}
               />
             </div>
@@ -387,6 +646,7 @@ export default function Home() {
                     setCosText("");
                     setCurrentAudit(null);
                     setSuggestedFix(null);
+                    setFixAccepted(false);
                     setError(null);
                     setScreen("upload");
                   }}
@@ -399,7 +659,13 @@ export default function Home() {
             <HealthScore score={audit.healthScore} />
             <div className="pl-divider" />
 
-            <CoverageGrid coverage={audit.coverage} coTexts={coTexts} />
+            <CoverageGrid
+              coverage={audit.coverage}
+              coTexts={coTexts}
+              suggestedQuestionIds={paper.questions
+                .filter((q: any) => q.is_suggested || (suggestedFix && q.id === suggestedFix.question.id))
+                .map((q) => q.id)}
+            />
             <div className="pl-divider" />
 
             <BloomChart bloom={audit.bloom} totalMarks={totalMarks} />
@@ -414,8 +680,10 @@ export default function Home() {
                   question={suggestedFix.question}
                   targetCo={suggestedFix.targetCo}
                   onRerun={handleRerunAudit}
+                  onAccept={handleAcceptFix}
                   onDismiss={handleRejectSuggestion}
                   isRerunning={isRerunning}
+                  isAccepted={fixAccepted}
                 />
                 <div className="pl-divider" />
               </>
@@ -431,6 +699,7 @@ export default function Home() {
             <AuditHistory
               records={history}
               onSelect={loadFromHistory}
+              onDelete={handleDeleteAudit}
               facultyName={activeFaculty.name}
             />
           </>

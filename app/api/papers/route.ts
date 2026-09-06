@@ -7,10 +7,12 @@ export const runtime = "nodejs";
 
 const DEFAULT_FACULTY_ID = "fac-01";
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
+    const { searchParams } = new URL(req.url);
+    const facultyParam = searchParams.get("facultyId");
     const faculty = await getCurrentFaculty();
-    const facultyId = faculty?.id || DEFAULT_FACULTY_ID;
+    const facultyId = facultyParam || faculty?.id || DEFAULT_FACULTY_ID;
     const papers = getPapersForFaculty(facultyId);
     return NextResponse.json({ papers });
   } catch (err: any) {
