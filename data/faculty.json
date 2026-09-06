@@ -1,0 +1,20 @@
+[
+  {
+    "id": "fac-01",
+    "name": "Dr. Mahmudul Hasan",
+    "department": "Computer Science and Engineering, AUST",
+    "courses": ["CSE 3103 - Database Management Systems", "CSE 4101 - Software Engineering"]
+  },
+  {
+    "id": "fac-02",
+    "name": "Dr. Nusrat Jahan",
+    "department": "Computer Science and Engineering, AUST",
+    "courses": ["CSE 2201 - Data Structures", "CSE 3205 - Operating Systems"]
+  },
+  {
+    "id": "fac-03",
+    "name": "Dr. Tanvir Ahmed",
+    "department": "Computer Science and Engineering, AUST",
+    "courses": ["CSE 1101 - Structured Programming", "CSE 3103 - Database Management Systems"]
+  }
+]
