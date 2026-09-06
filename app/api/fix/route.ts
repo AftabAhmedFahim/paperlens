@@ -95,6 +95,14 @@ function demoQuestion(paper: Paper, targetCo?: string, replaceQuestionId?: strin
     };
   }
 
+  if (replaceQuestionId === "3b") {
+    return {
+      id: "3b",
+      text: "Given a University Research database with relation Project(grant_id, title, pi_id, pi_name, sponsor, allocated_budget) and functional dependencies grant_id -> title, pi_id, sponsor; pi_id -> pi_name. Determine all candidate keys, identify any partial or transitive dependencies, and decompose the schema into Boyce-Codd Normal Form (BCNF) while preserving dependencies.",
+      marks: 7,
+    };
+  }
+
   // 2. Default CO6 missing outcome fix (preserves the verified 65 -> 82 demo flow)
   if (targetCo === "CO6" || !targetCo) {
     return { ...demoFix.question, id: freshId(paper, demoFix.question.id) };
