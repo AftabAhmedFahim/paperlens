@@ -1,0 +1,13 @@
+{
+  "question": {
+    "id": "5a",
+    "text": "An online ticket booking system stores the relation Booking(pnr, flight_no, passenger_name, journey_date, seat_no). About ninety percent of the queries retrieve a single booking by its pnr, while the remaining queries list all the bookings made for a given journey_date. The design team is considering two access paths: (i) a hash index on pnr, and (ii) a B+ tree index on journey_date. Compare the two strategies for this workload in terms of lookup cost, range query support and maintenance overhead, and justify which one you would recommend as the primary access path for the relation.",
+    "marks": 8
+  },
+  "classification": {
+    "id": "5a",
+    "co": "CO6",
+    "bloom": "Evaluate",
+    "rationale": "Asks the student to compare two indexing strategies against a stated workload and defend a recommendation."
+  }
+}

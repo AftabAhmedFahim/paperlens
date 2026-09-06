@@ -1,0 +1,191 @@
+{
+  "healthScore": 65,
+  "coverage": [
+    {
+      "co": "CO1",
+      "questionIds": [
+        "1a",
+        "1b"
+      ],
+      "marks": 17,
+      "sharePct": 28.3,
+      "status": "ok"
+    },
+    {
+      "co": "CO2",
+      "questionIds": [
+        "2a",
+        "2b"
+      ],
+      "marks": 13,
+      "sharePct": 21.7,
+      "status": "ok"
+    },
+    {
+      "co": "CO3",
+      "questionIds": [
+        "3a"
+      ],
+      "marks": 7,
+      "sharePct": 11.7,
+      "status": "ok"
+    },
+    {
+      "co": "CO4",
+      "questionIds": [
+        "3b"
+      ],
+      "marks": 7,
+      "sharePct": 11.7,
+      "status": "ok"
+    },
+    {
+      "co": "CO5",
+      "questionIds": [
+        "4a",
+        "4b"
+      ],
+      "marks": 16,
+      "sharePct": 26.7,
+      "status": "ok"
+    },
+    {
+      "co": "CO6",
+      "questionIds": [],
+      "marks": 0,
+      "sharePct": 0,
+      "status": "missing"
+    }
+  ],
+  "bloom": {
+    "Remember": 23.3,
+    "Understand": 31.7,
+    "Apply": 33.3,
+    "Analyze": 11.7,
+    "Evaluate": 0,
+    "Create": 0
+  },
+  "questionAnalysis": [
+    {
+      "id": "1a",
+      "co": "CO1",
+      "bloom": "Remember",
+      "rationale": "Asks the student to recall four definitions and state two named integrity constraints."
+    },
+    {
+      "id": "1b",
+      "co": "CO1",
+      "bloom": "Understand",
+      "rationale": "Asks for an explanation of three key types and the effect of two delete options on a given schema."
+    },
+    {
+      "id": "2a",
+      "co": "CO2",
+      "bloom": "Apply",
+      "rationale": "Requires constructing an ER diagram from a stated scenario using taught notation."
+    },
+    {
+      "id": "2b",
+      "co": "CO2",
+      "bloom": "Apply",
+      "rationale": "Applies the standard ER-to-relational mapping procedure to a diagram already drawn."
+    },
+    {
+      "id": "3a",
+      "co": "CO3",
+      "bloom": "Apply",
+      "rationale": "Applies relational algebra and SQL syntax to write queries over a supplied schema."
+    },
+    {
+      "id": "3b",
+      "co": "CO4",
+      "bloom": "Analyze",
+      "rationale": "Requires deriving the candidate key, diagnosing anomalies and decomposing the relation."
+    },
+    {
+      "id": "4a",
+      "co": "CO5",
+      "bloom": "Understand",
+      "rationale": "Explains four named properties and illustrates each with a banking situation."
+    },
+    {
+      "id": "4b",
+      "co": "CO5",
+      "bloom": "Remember",
+      "rationale": "Recalls a definition, a list of transaction states and the names of two failure types."
+    }
+  ],
+  "repeats": [
+    {
+      "questionId": "1a",
+      "matchYear": "2024",
+      "similarity": 0.901,
+      "verdict": "near-duplicate",
+      "matchText": "Define the following terms with reference to the relational data model: (i) relation instance, (ii) cardinality of a relation, (iii) attribute domain, (iv) superkey. State the entity integrity constraint and the referential integrity constraint.",
+      "reason": "Same four-part definition task and the same two integrity constraints; only the terms named have been swapped."
+    },
+    {
+      "questionId": "4a",
+      "matchYear": "2023",
+      "similarity": 0.627,
+      "verdict": "near-duplicate",
+      "matchText": "Describe the four ACID properties of a transaction. For each property, give an example from an airline reservation system in which a violation of that property would leave the database in an inconsistent state.",
+      "reason": "Identical task - explain each ACID property and illustrate a violation; only the application domain changes from airline to banking."
+    },
+    {
+      "questionId": "3b",
+      "matchYear": "2022",
+      "similarity": 0.341,
+      "verdict": "near-duplicate",
+      "matchText": "Consider the relation Assignment(staff_id, staff_name, task_id, task_title, hours_logged, unit_name, unit_head) with the following functional dependencies: staff_id -> staff_name, unit_name; unit_name -> unit_head; task_id -> task_title; staff_id, task_id -> hours_logged. (i) Identify the candidate key of the relation and justify your answer. (ii) Identify the insertion, deletion and update anomalies present in the relation. (iii) Decompose the relation up to 3NF, showing the relations obtained at each step.",
+      "reason": "Same three-part normalisation task on a relation with the same dependency structure; only the table and attribute names differ."
+    },
+    {
+      "questionId": "2a",
+      "matchYear": "2023",
+      "similarity": 0.268,
+      "verdict": "related",
+      "matchText": "Draw an ER diagram for an online bookshop that sells books supplied by several publishers to registered customers. Show all entity sets, relationship sets and primary key attributes. Explain why a many-to-many relationship set must be represented by a separate relation.",
+      "reason": "Both ask for an ER diagram, but this paper supplies a course-registration scenario and asks for cardinality and participation constraints rather than an explanation of many-to-many relationships."
+    },
+    {
+      "questionId": "3a",
+      "matchYear": "2022",
+      "similarity": 0.257,
+      "verdict": "related",
+      "matchText": "Consider the relations Employee(emp_id, ename, salary, dept_id) and Department(dept_id, dname, city). (i) Write a relational algebra expression to find the names of the employees who work in the departments located in 'Khulna'. (ii) Write an SQL query to list the name of each department along with the total salary paid by that department. (iii) Write an SQL query to find the departments that have no employee.",
+      "reason": "Both mix relational algebra with SQL aggregation, but the schemas and the specific queries requested are different."
+    }
+  ],
+  "issues": [
+    {
+      "severity": "high",
+      "message": "CO6 is not assessed anywhere in this paper. No question carries marks against this outcome.",
+      "targetCo": "CO6"
+    },
+    {
+      "severity": "high",
+      "message": "1a is a near-duplicate of a 2024 question (90% similar). Students working from past papers can pre-memorise the answer."
+    },
+    {
+      "severity": "high",
+      "message": "4a is a near-duplicate of a 2023 question (63% similar). Students working from past papers can pre-memorise the answer."
+    },
+    {
+      "severity": "high",
+      "message": "3b is a near-duplicate of a 2022 question (34% similar). Students working from past papers can pre-memorise the answer."
+    },
+    {
+      "severity": "medium",
+      "message": "55% of marks sit at Remember or Understand. The paper is skewed toward lower-order thinking."
+    },
+    {
+      "severity": "low",
+      "message": "2a resembles a 2023 question (27% similar), though the task differs."
+    },
+    {
+      "severity": "low",
+      "message": "3a resembles a 2022 question (26% similar), though the task differs."
+    }
+  ]
+}
