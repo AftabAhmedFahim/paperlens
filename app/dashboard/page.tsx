@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
 import samplePaperJson from "@/data/sample-paper.json";
 import sampleCosJson from "@/data/sample-cos.json";
+import samplePaperCse1101Json from "@/data/sample-paper-cse1101.json";
+import samplePaperCse2101Json from "@/data/sample-paper-cse2101.json";
 import facultyData from "@/data/faculty.json";
 import { Audit, Paper, CourseOutcome, Question, Bloom } from "@/lib/types";
 import { UploadPanel, Analyzing } from "@/components/UploadAndAnalyzing";
@@ -161,17 +163,41 @@ export default function DashboardPage() {
 
   // Load sample paper and course outcomes
   function loadSample() {
-    const p = samplePaperJson as Paper;
-    const c = sampleCosJson as CourseOutcome[];
+    let p: Paper;
+    let c: CourseOutcome[];
+    let pid: string;
+
+    if (activeFaculty.id === "fac-03") {
+      p = {
+        course: samplePaperCse1101Json.course,
+        totalMarks: samplePaperCse1101Json.totalMarks,
+        questions: samplePaperCse1101Json.questions as Question[],
+      };
+      c = samplePaperCse1101Json.outcomes as CourseOutcome[];
+      pid = "paper-cse1101-sample";
+    } else if (activeFaculty.id === "fac-02") {
+      p = {
+        course: samplePaperCse2101Json.course,
+        totalMarks: samplePaperCse2101Json.totalMarks,
+        questions: samplePaperCse2101Json.questions as Question[],
+      };
+      c = samplePaperCse2101Json.outcomes as CourseOutcome[];
+      pid = "paper-cse2101-sample";
+    } else {
+      p = samplePaperJson as Paper;
+      c = sampleCosJson as CourseOutcome[];
+      pid = "paper-cse3103-sample";
+    }
+
     setPaper(p);
     setCourseOutcomes(c);
     setPaperText(JSON.stringify(p, null, 2));
     setCosText(JSON.stringify(c, null, 2));
-    setCurrentPaperId("paper-cse3103-sample");
+    setCurrentPaperId(pid);
     setSuggestedFix(null);
     setFixAccepted(false);
     setFixError(null);
-    showToast("Sample paper & outcomes loaded");
+    showToast(`Loaded ${p.course} sample paper & outcomes`);
   }
 
   // Handle selecting a paper from the Library
@@ -187,6 +213,10 @@ export default function DashboardPage() {
       };
       setPaper(p);
       setPaperText(JSON.stringify(p, null, 2));
+      if (data.courseOutcomes && data.courseOutcomes.length > 0) {
+        setCourseOutcomes(data.courseOutcomes);
+        setCosText(JSON.stringify(data.courseOutcomes, null, 2));
+      }
       setCurrentPaperId(paperId);
       setSuggestedFix(null);
       setFixAccepted(false);
@@ -316,6 +346,8 @@ export default function DashboardPage() {
           ? "Evaluate"
           : ((issue as any).targetBloom || "Apply");
 
+      const isRegenerating = Boolean(suggestedFix && (suggestedFix.issueMessage === issue.message || suggestedFix.question.id === targetQId));
+
       const res = await fetch("/api/fix", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -326,6 +358,7 @@ export default function DashboardPage() {
           targetBloom,
           replaceQuestionId: targetQId,
           issueMessage: issue.message,
+          currentFixText: suggestedFix?.question?.text,
         }),
       });
 
@@ -344,7 +377,7 @@ export default function DashboardPage() {
       let originalReplacedQuestion: Question | undefined;
 
       if (targetQId && paper.questions.some((q) => q.id === targetQId)) {
-        originalReplacedQuestion = paper.questions.find((q) => q.id === targetQId);
+        originalReplacedQuestion = suggestedFix?.replacedQuestion || paper.questions.find((q) => q.id === targetQId);
         updatedQuestions = paper.questions.map((q) =>
           q.id === targetQId ? qWithSuggested : q
         );
@@ -375,7 +408,7 @@ export default function DashboardPage() {
       setFixAccepted(false);
       setFixError(null);
 
-      showToast(`Generated fix for Question ${newQuestion.id}`);
+      showToast(isRegenerating ? `Generated alternative fix for Question ${newQuestion.id}` : `Generated fix for Question ${newQuestion.id}`);
 
       // Smooth scroll to ensure the suggested fix is visible
       setTimeout(() => {
