@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import samplePaper from "@/data/sample-paper.json";
+import sampleCos from "@/data/sample-cos.json";
 import pastQuestions from "@/data/past-questions.json";
 import { buildAudit } from "@/lib/audit";
 import { generateJson } from "@/lib/gemini";
@@ -15,6 +17,20 @@ import {
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
+
+/** Smoke test - GET /api/analyze runs the whole pipeline on the seeded sample. */
+export async function GET() {
+  const audit = await analyze(samplePaper as Paper, sampleCos as CourseOutcome[]);
+  return NextResponse.json({
+    _smokeTest: "seeded sample-paper.json + sample-cos.json",
+    healthScore: audit.healthScore,
+    bloom: audit.bloom,
+    coverage: audit.coverage,
+    repeats: audit.repeats,
+    issues: audit.issues,
+    questionAnalysis: audit.questionAnalysis,
+  });
+}
 
 export async function POST(req: Request) {
   try {
