@@ -55,7 +55,6 @@ body {
 }
 
 .pl-nav-tag {
-  margin-left: auto;
   font-size: 0.75rem;
   color: #6b7280;
   background: #f3f4f6;
@@ -788,4 +787,233 @@ body {
   height: 1px;
   background: #f0f0f4;
   margin-bottom: 3.5rem;
+}
+
+/* ─── Faculty Switcher ────────────────────────────────────────────────────── */
+.pl-faculty-switcher {
+  position: relative;
+  margin-left: auto;
+}
+
+.pl-faculty-trigger {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.35rem 0.625rem 0.35rem 0.35rem;
+  background: transparent;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.pl-faculty-trigger:hover {
+  border-color: #c7d2fe;
+  background: #fafafe;
+}
+
+.pl-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 8px;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.75rem;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+}
+
+.pl-avatar-sm {
+  width: 1.625rem;
+  height: 1.625rem;
+  font-size: 0.6875rem;
+  border-radius: 6px;
+}
+
+.pl-faculty-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+}
+
+.pl-faculty-name {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #111827;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.pl-faculty-dept {
+  font-size: 0.6875rem;
+  color: #9ca3af;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.pl-faculty-chevron {
+  color: #9ca3af;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+/* Dropdown */
+.pl-faculty-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  width: 280px;
+  background: #fff;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+  z-index: 50;
+  padding: 0.5rem;
+  animation: pl-dropdown-in 0.15s ease;
+}
+
+@keyframes pl-dropdown-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.pl-dropdown-label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #9ca3af;
+  padding: 0.375rem 0.625rem 0.5rem;
+}
+
+.pl-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  width: 100%;
+  padding: 0.5rem 0.625rem;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s;
+}
+
+.pl-dropdown-item:hover {
+  background: #f5f3ff;
+}
+
+.pl-dropdown-active {
+  background: #eef2ff;
+}
+
+.pl-dropdown-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  flex: 1;
+  min-width: 0;
+}
+
+.pl-dropdown-item-name {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pl-dropdown-item-courses {
+  font-size: 0.6875rem;
+  color: #9ca3af;
+}
+
+.pl-dropdown-check {
+  flex-shrink: 0;
+}
+
+/* ─── Audit History ───────────────────────────────────────────────────────── */
+.pl-history-empty {
+  background: #fff;
+  border: 1.5px dashed #e5e7eb;
+  border-radius: 12px;
+  padding: 2rem 1.5rem;
+  text-align: center;
+}
+
+.pl-history-empty-text {
+  font-size: 0.9rem;
+  color: #9ca3af;
+  line-height: 1.6;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.pl-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.pl-history-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: #fff;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s;
+}
+
+.pl-history-row:hover {
+  border-color: #c7d2fe;
+  background: #fafafe;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.06);
+}
+
+.pl-history-dot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.pl-history-course {
+  flex: 1;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pl-history-score {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #111827;
+  min-width: 28px;
+  text-align: right;
+}
+
+.pl-history-issues {
+  font-size: 0.8125rem;
+  color: #9ca3af;
+  white-space: nowrap;
+}
+
+.pl-history-time {
+  font-size: 0.75rem;
+  color: #c4c9d4;
+  white-space: nowrap;
 }
