@@ -49,7 +49,9 @@ export default function Home() {
     targetCo: string;
     targetBloom: Bloom;
     replacedQuestion?: Question;
+    issueMessage?: string;
   } | null>(null);
+  const [fixError, setFixError] = useState<{ index: number; message: string } | null>(null);
   const [fixAccepted, setFixAccepted] = useState(false);
   const [isRerunning, setIsRerunning] = useState(false);
 
@@ -397,11 +399,23 @@ export default function Home() {
         targetCo: targetCo || "CO6",
         targetBloom,
         replacedQuestion: originalReplacedQuestion,
+        issueMessage: issue.message,
       });
       setFixAccepted(false);
+      setFixError(null);
+
+      // Smooth scroll to fix
+      setTimeout(() => {
+        const el = document.getElementById("suggested-fix-card") || document.getElementById(`issue-row-${index}`);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }, 100);
     } catch (err: any) {
       console.error("[handleGenerateFix] error:", err);
-      setError(err?.message || "Failed to generate fix question.");
+      const errMsg = err?.message || "Failed to generate fix question.";
+      setError(errMsg);
+      setFixError({ index, message: errMsg });
     } finally {
       setGeneratingIndex(null);
     }
@@ -527,6 +541,7 @@ export default function Home() {
     });
     setSuggestedFix(null);
     setFixAccepted(false);
+    setFixError(null);
 
     if (currentPaperId && fixAccepted) {
       try {
@@ -740,6 +755,22 @@ export default function Home() {
               issues={audit.issues}
               onGenerateFix={handleGenerateFix}
               generatingIndex={generatingIndex}
+              activeFix={
+                suggestedFix
+                  ? {
+                      question: suggestedFix.question,
+                      targetCo: suggestedFix.targetCo,
+                      replacedQuestionId: suggestedFix.replacedQuestion?.id,
+                      issueMessage: suggestedFix.issueMessage,
+                    }
+                  : null
+              }
+              fixError={fixError}
+              onRerun={handleRerunAudit}
+              onAccept={handleAcceptFix}
+              onDismiss={handleRejectSuggestion}
+              isRerunning={isRerunning}
+              isAccepted={fixAccepted}
             />
             <div className="pl-divider" />
 
