@@ -43,11 +43,12 @@ export default function Home() {
   const [loadingPapers, setLoadingPapers] = useState(false);
 
   // ── Fix-it loop state ──
-  const [generatingCo, setGeneratingCo] = useState<string | null>(null);
+  const [generatingIndex, setGeneratingIndex] = useState<number | null>(null);
   const [suggestedFix, setSuggestedFix] = useState<{
     question: Question;
     targetCo: string;
     targetBloom: Bloom;
+    replacedQuestion?: Question;
   } | null>(null);
   const [fixAccepted, setFixAccepted] = useState(false);
   const [isRerunning, setIsRerunning] = useState(false);
@@ -314,13 +315,35 @@ export default function Home() {
     setScreen("report");
   }
 
-  async function handleGenerateFix(targetCo: string) {
-    setGeneratingCo(targetCo);
+  async function handleGenerateFix(issue: Audit["issues"][0], index: number) {
+    setGeneratingIndex(index);
     setError(null);
 
     try {
-      const co = courseOutcomes.find((c) => c.id === targetCo);
-      const targetBloom: Bloom = co?.targetBloom ?? "Evaluate";
+      // 1. Detect if the issue is a repeat or specific to a question (e.g. "1a is a near-duplicate...", "2a resembles...")
+      const repeatMatch = issue.message.match(/^(\w+)\s+(is a near-duplicate|resembles)/);
+      const targetQId = repeatMatch ? repeatMatch[1] : undefined;
+
+      // 2. Determine targetCo and targetBloom
+      let targetCo = issue.targetCo;
+      let targetBloom: Bloom = "Apply";
+
+      if (targetQId) {
+        const qa = currentAudit?.questionAnalysis?.find((q) => q.id === targetQId);
+        if (qa) {
+          targetCo = qa.co;
+          targetBloom = qa.bloom;
+        } else if (!targetCo) {
+          targetCo = targetQId.startsWith("1") ? "CO1" : targetQId.startsWith("2") ? "CO2" : targetQId.startsWith("3") ? "CO3" : "CO4";
+        }
+      } else if (!targetCo) {
+        // e.g. Bloom skew: "55% of marks sit at Remember or Understand"
+        targetCo = courseOutcomes.find((c) => c.targetBloom === "Evaluate" || c.targetBloom === "Analyze")?.id || "CO6";
+        targetBloom = "Evaluate";
+      } else {
+        const co = courseOutcomes.find((c) => c.id === targetCo);
+        targetBloom = co?.targetBloom ?? (targetCo === "CO6" ? "Evaluate" : "Apply");
+      }
 
       const res = await fetch("/api/fix", {
         method: "POST",
@@ -330,6 +353,8 @@ export default function Home() {
           courseOutcomes,
           targetCo,
           targetBloom,
+          replaceQuestionId: targetQId,
+          issueMessage: issue.message,
         }),
       });
 
@@ -343,30 +368,42 @@ export default function Home() {
       }
 
       const qWithSuggested = { ...newQuestion, is_suggested: 1 };
-      const alreadyExists = paper.questions.some((q) => q.id === newQuestion.id);
-      const extendedQuestions = alreadyExists
-        ? paper.questions
-        : [...paper.questions, qWithSuggested];
 
-      const extendedTotalMarks = extendedQuestions.reduce((s, q) => s + (q.marks || 0), 0);
+      let updatedQuestions: Question[];
+      let originalReplacedQuestion: Question | undefined;
+
+      if (targetQId && paper.questions.some((q) => q.id === targetQId)) {
+        originalReplacedQuestion = paper.questions.find((q) => q.id === targetQId);
+        updatedQuestions = paper.questions.map((q) =>
+          q.id === targetQId ? qWithSuggested : q
+        );
+      } else {
+        const alreadyExists = paper.questions.some((q) => q.id === newQuestion.id);
+        updatedQuestions = alreadyExists
+          ? paper.questions.map((q) => (q.id === newQuestion.id ? qWithSuggested : q))
+          : [...paper.questions, qWithSuggested];
+      }
+
+      const extendedTotalMarks = updatedQuestions.reduce((s, q) => s + (q.marks || 0), 0);
       const updatedPaper: Paper = {
         ...paper,
-        questions: extendedQuestions,
+        questions: updatedQuestions,
         totalMarks: extendedTotalMarks,
       };
 
       setPaper(updatedPaper);
       setSuggestedFix({
         question: newQuestion,
-        targetCo,
+        targetCo: targetCo || "CO6",
         targetBloom,
+        replacedQuestion: originalReplacedQuestion,
       });
       setFixAccepted(false);
     } catch (err: any) {
       console.error("[handleGenerateFix] error:", err);
       setError(err?.message || "Failed to generate fix question.");
     } finally {
-      setGeneratingCo(null);
+      setGeneratingIndex(null);
     }
   }
 
@@ -472,11 +509,20 @@ export default function Home() {
 
   async function handleRejectSuggestion() {
     if (!suggestedFix) return;
-    const filteredQuestions = paper.questions.filter((q) => q.id !== suggestedFix.question.id);
-    const total = filteredQuestions.reduce((s, q) => s + (q.marks || 0), 0);
+
+    let restoredQuestions: Question[];
+    if (suggestedFix.replacedQuestion) {
+      restoredQuestions = paper.questions.map((q) =>
+        q.id === suggestedFix.question.id ? suggestedFix.replacedQuestion! : q
+      );
+    } else {
+      restoredQuestions = paper.questions.filter((q) => q.id !== suggestedFix.question.id);
+    }
+
+    const total = restoredQuestions.reduce((s, q) => s + (q.marks || 0), 0);
     setPaper({
       ...paper,
-      questions: filteredQuestions,
+      questions: restoredQuestions,
       totalMarks: total,
     });
     setSuggestedFix(null);
@@ -487,7 +533,7 @@ export default function Home() {
         await fetch(`/api/papers/${currentPaperId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ questions: filteredQuestions }),
+          body: JSON.stringify({ questions: restoredQuestions }),
         });
         fetchPapers(activeFaculty.id);
       } catch (err) {
@@ -679,6 +725,7 @@ export default function Home() {
                 <SuggestedQuestionCard
                   question={suggestedFix.question}
                   targetCo={suggestedFix.targetCo}
+                  replacedQuestionId={suggestedFix.replacedQuestion?.id}
                   onRerun={handleRerunAudit}
                   onAccept={handleAcceptFix}
                   onDismiss={handleRejectSuggestion}
@@ -692,7 +739,7 @@ export default function Home() {
             <Issues
               issues={audit.issues}
               onGenerateFix={handleGenerateFix}
-              generatingCo={generatingCo}
+              generatingIndex={generatingIndex}
             />
             <div className="pl-divider" />
 
